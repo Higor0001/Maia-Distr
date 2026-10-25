@@ -680,10 +680,11 @@ export default function Home() {
       <div className="login-shell site-login">
         <style>{`
           .site-login {
-            background: linear-gradient(135deg, #0f172a 0%, #1a2a6c 55%, #2b48a0 100%);
-            background-position: 50%;
+            background-image: linear-gradient(rgba(10, 18, 12, 0.45), rgba(10, 18, 12, 0.58)), url('/images/login-bg.jpg');
+            background-position: center;
             background-repeat: no-repeat;
             background-size: cover;
+            background-attachment: fixed;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
@@ -695,16 +696,16 @@ export default function Home() {
           .site-card {
             -webkit-backdrop-filter: blur(14px);
             backdrop-filter: blur(14px);
-            background: rgba(255, 255, 255, 0.92);
+            background: rgba(255, 255, 255, 0.93);
             border: 1px solid rgba(26, 42, 108, 0.12);
-            border-radius: 16px;
+            border-radius: 18px;
             flex-direction: column;
             gap: 12px;
             width: min(420px, 100%);
             padding: 28px 26px;
             animation: 0.5s ease-out login-rise;
             display: flex;
-            box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+            box-shadow: 0 22px 48px rgba(0, 0, 0, 0.42);
           }
           .site-title {
             text-align: center;
@@ -785,8 +786,22 @@ export default function Home() {
         `}</style>
 
         <div className="login-card site-card">
-          <div className="site-title">Triagem Filial</div>
-          <p className="site-subtitle">Acesso ao sistema de triagem &amp; hortigranjeiros</p>
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: "4px" }}>
+            <img
+              src="/images/maia-logo.jpg"
+              alt="Maia Distribuidor Hortifrutigranjeiros"
+              style={{
+                width: "96px",
+                height: "96px",
+                objectFit: "cover",
+                borderRadius: "50%",
+                boxShadow: "0 6px 18px rgba(0, 0, 0, 0.22)",
+                border: "2px solid #5c4632",
+              }}
+            />
+          </div>
+          <div className="site-title">Maia Hortifrutigranjeiros</div>
+          <p className="site-subtitle">Acesso ao sistema de triagem &amp; estoque</p>
 
           <form onSubmit={handleLoginSubmit} className="login-form site-form">
             <label htmlFor="login-usuario">Usuario</label>
@@ -996,7 +1011,21 @@ export default function Home() {
       <div className="marca-foto-container">
         <div className="container">
           <header>
-            <h1>🥬 Controle de Perdas — Hortigranjeiros</h1>
+            <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "12px", marginBottom: "6px" }}>
+              <img
+                src="/images/maia-logo.jpg"
+                alt="Maia Hortifrutigranjeiros"
+                style={{
+                  width: "56px",
+                  height: "56px",
+                  borderRadius: "50%",
+                  objectFit: "cover",
+                  border: "2px solid #5c4632",
+                  boxShadow: "0 4px 10px rgba(0,0,0,0.15)",
+                }}
+              />
+              <h1 style={{ margin: 0 }}>Controle de Perdas — Hortigranjeiros</h1>
+            </div>
             <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "12px", marginTop: "6px", flexWrap: "wrap" }}>
               <span style={{ fontSize: "14px", color: "#666" }}>
                 {connectionStatus === "online" ? "🟢 Online" : "🔴 Offline"}

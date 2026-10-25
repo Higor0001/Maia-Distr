@@ -1549,28 +1549,56 @@ export default function GerenciadorEstoquePage() {
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
-            gap: "8px",
+            gap: "12px",
             flexWrap: "wrap",
+            padding: "16px 18px",
+            borderRadius: "14px",
+            backgroundImage:
+              "linear-gradient(135deg, rgba(15, 23, 42, 0.82) 0%, rgba(26, 42, 108, 0.75) 100%), url('/images/estoque-bg.jpg')",
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            boxShadow: "0 10px 24px rgba(0, 0, 0, 0.18)",
           }}
         >
-          <div>
-            <div className="stock-title" style={{ textAlign: "left" }}>
-              📦 Gerenciador de Estoque — Hortigranjeiros
-            </div>
-            <div className="stock-subtitle" style={{ textAlign: "left" }}>
-              Contagem direta em Caixas e Sacos (sem lastro ou avulsos)
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+            <img
+              src="/images/maia-logo.jpg"
+              alt="Maia Distribuidor Hortifrutigranjeiros"
+              style={{
+                width: "58px",
+                height: "58px",
+                borderRadius: "50%",
+                objectFit: "cover",
+                border: "2px solid #f5f0e1",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
+              }}
+            />
+            <div>
+              <div
+                className="stock-title"
+                style={{ textAlign: "left", color: "#ffffff" }}
+              >
+                📦 Gerenciador de Estoque — Maia Hortifrutigranjeiros
+              </div>
+              <div
+                className="stock-subtitle"
+                style={{ textAlign: "left", color: "#e2e8f0" }}
+              >
+                Contagem direta em Caixas e Sacos (sem lastro ou avulsos)
+              </div>
             </div>
           </div>
           <Link
             href="/"
             style={{
-              background: "#eef1f8",
+              background: "rgba(255, 255, 255, 0.95)",
               color: "#1a2a6c",
-              padding: "8px 14px",
+              padding: "9px 14px",
               borderRadius: "10px",
               fontSize: "12px",
               fontWeight: 700,
               textDecoration: "none",
+              boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
             }}
           >
             🥬 Ir para Controle de Perdas
@@ -2367,16 +2395,20 @@ export default function GerenciadorEstoquePage() {
 
       <style jsx>{`
         .stock-shell {
-          background: #f3f4f8;
+          background-image: linear-gradient(rgba(15, 23, 42, 0.55), rgba(15, 23, 42, 0.68)), url('/images/estoque-bg.jpg');
+          background-size: cover;
+          background-position: center;
+          background-attachment: fixed;
           min-height: 100vh;
-          padding: 0;
+          padding: 20px 12px;
           width: 100%;
         }
         .stock-card {
-          min-height: 100vh;
-          box-shadow: none;
-          background: #fff;
-          border-radius: 0;
+          min-height: calc(100vh - 40px);
+          box-shadow: 0 20px 45px rgba(0, 0, 0, 0.35);
+          background: rgba(255, 255, 255, 0.95);
+          backdrop-filter: blur(12px);
+          border-radius: 16px;
           gap: 12px;
           padding: 16px;
           display: grid;
@@ -2384,12 +2416,14 @@ export default function GerenciadorEstoquePage() {
           margin: 0 auto;
         }
         .stock-shell.full {
-          background: #eef1f8;
+          background-image: linear-gradient(rgba(15, 23, 42, 0.55), rgba(15, 23, 42, 0.68)), url('/images/estoque-bg.jpg');
+          padding: 0;
         }
         .stock-card.full {
           border-radius: 0;
           width: 100%;
           max-width: none;
+          min-height: 100vh;
           padding: 20px 24px 28px;
         }
         .stock-title {
