@@ -1,1 +1,1402 @@
-[]
+[
+  {
+    "reduzido": "1001",
+    "descricao": "ABACATE 20 KG",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 20
+  },
+  {
+    "reduzido": "1002",
+    "descricao": "ABACAXI GRANDE",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1003",
+    "descricao": "ABACAXI MÉDIO",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1004",
+    "descricao": "ABOBRINHA PRINCESA",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1005",
+    "descricao": "ABOBRINHA VERDE",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1006",
+    "descricao": "ABÓBORA JACARÉ",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1007",
+    "descricao": "ABÓBORA JACARÉ REGIÃO",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1008",
+    "descricao": "ABÓBORA JAPONESA 20 KG",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 20
+  },
+  {
+    "reduzido": "1009",
+    "descricao": "ABÓBORA JAPONESA 38 KG",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 38
+  },
+  {
+    "reduzido": "1010",
+    "descricao": "ABÓBORA MARANHÃO",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1011",
+    "descricao": "ACELGA",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1012",
+    "descricao": "AIPIM",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1013",
+    "descricao": "ALHO ARGENTINO 5 LIMPO",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1014",
+    "descricao": "ALHO ARGENTINO 6 CAT II",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1015",
+    "descricao": "ALHO ARGENTINO 6 LIMPO",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1016",
+    "descricao": "ALHO ARGENTINO 7 CAT 2 PALHA",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1017",
+    "descricao": "ALHO ARGENTINO 7 CAT I",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1018",
+    "descricao": "ALHO ARGENTINO CAT II 5 LIMPO",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1019",
+    "descricao": "ALHO CHINÊS 9",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1020",
+    "descricao": "AMEIXA EMBALADA 10 KG",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 10
+  },
+  {
+    "reduzido": "1021",
+    "descricao": "AMEIXA NACIONAL 9 KG",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 9
+  },
+  {
+    "reduzido": "1022",
+    "descricao": "AMEIXA SECA SEM CAROÇO",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1023",
+    "descricao": "AMENDOIM TORRADO",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1024",
+    "descricao": "BANANA DA TERRA BANDEJA",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "bdj",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1025",
+    "descricao": "BANANA DA TERRA GRANDE",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1026",
+    "descricao": "BANANA NANICA",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1027",
+    "descricao": "BANANA NANICA 20 KG",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 20
+  },
+  {
+    "reduzido": "1028",
+    "descricao": "BANANA NANICA BANDEJA",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "bdj",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1029",
+    "descricao": "BANANA PRATA EXTRA",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1030",
+    "descricao": "BANANA PRATA GRANDE 10 KG",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 10
+  },
+  {
+    "reduzido": "1031",
+    "descricao": "BANANA PRATA MÉDIA",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1032",
+    "descricao": "BATATA DOCE",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1033",
+    "descricao": "BATATA DOCE BRANCA",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1034",
+    "descricao": "BATATA DOCE MÉDIA",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1035",
+    "descricao": "BATATA EXTRA",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1036",
+    "descricao": "BATATA PRIMEIRINHA",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1037",
+    "descricao": "BERINGELA",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1038",
+    "descricao": "BETERRABA",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1039",
+    "descricao": "CEBOLA CAT 2",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1040",
+    "descricao": "CEBOLA CAT 3",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1041",
+    "descricao": "CEBOLA CAT 4",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1042",
+    "descricao": "CEBOLA ROXA",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1043",
+    "descricao": "CENOURA",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1044",
+    "descricao": "CENOURA QUEBRADA",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1045",
+    "descricao": "CHUCHU",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1046",
+    "descricao": "COCO SECO",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1047",
+    "descricao": "COCO VERDE UNIDADE",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "un",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1048",
+    "descricao": "COLORAU",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1049",
+    "descricao": "COUVE FLOR",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1050",
+    "descricao": "FEIJÃO PRETO",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1051",
+    "descricao": "FEIJÃO VERMELHO",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1052",
+    "descricao": "FRUTAS CRISTALIZADAS",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1053",
+    "descricao": "GENGIBRE",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1054",
+    "descricao": "GOIABA CAIXA GRANDE",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "cx",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1055",
+    "descricao": "INHAME CABEÇA",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1056",
+    "descricao": "INHAME DEDO",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1057",
+    "descricao": "INHAME MÉDIO",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1058",
+    "descricao": "JILÓ",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1059",
+    "descricao": "KIWI",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1060",
+    "descricao": "LARANJA BAHIA IMPORTADA",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1061",
+    "descricao": "LARANJA LIMA",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1062",
+    "descricao": "LARANJA PERA",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1063",
+    "descricao": "LIMÃO REGIÃO",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1064",
+    "descricao": "LIMÃO SP",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1065",
+    "descricao": "MAMÃO CAIXA MADEIRA",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "cx",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1066",
+    "descricao": "MAMÃO CAIXA PAPELÃO",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "cx",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1067",
+    "descricao": "MANGA PALMER 12 KG",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 12
+  },
+  {
+    "reduzido": "1068",
+    "descricao": "MANGA TOMY",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1069",
+    "descricao": "MARACUJÁ",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1070",
+    "descricao": "MAÇA A GRANEL",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1071",
+    "descricao": "MAÇA ARGENTINA 10 KG",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 10
+  },
+  {
+    "reduzido": "1072",
+    "descricao": "MAÇA ARGENTINA 15 KG",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 15
+  },
+  {
+    "reduzido": "1073",
+    "descricao": "MAÇA EVA CAT III 120",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1074",
+    "descricao": "MAÇA EVA CAT III 135",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1075",
+    "descricao": "MAÇA FUJI 135 CAT I",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1076",
+    "descricao": "MAÇA GALA CAT I 135",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1077",
+    "descricao": "MAÇA GALA CAT III 120",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1078",
+    "descricao": "MAÇA GALA CAT III 135",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1079",
+    "descricao": "MAÇA GALA CAT III 150",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1080",
+    "descricao": "MAÇA GALA I 120",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1081",
+    "descricao": "MAÇA GS 9 KG",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 9
+  },
+  {
+    "reduzido": "1082",
+    "descricao": "MAÇA NACIONAL 135 CAT I",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1083",
+    "descricao": "MAÇA NACIONAL AGRANEL",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1084",
+    "descricao": "MAÇA NACIONAL CAT III GRANEL",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1085",
+    "descricao": "MAÇA NACIONAL GALA CAT I 120",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1086",
+    "descricao": "MELANCIA",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1087",
+    "descricao": "MELANCIA BABY",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1088",
+    "descricao": "MELÃO AMARELO",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1089",
+    "descricao": "MELÃO CEPI",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1090",
+    "descricao": "MELÃO REI",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1091",
+    "descricao": "MELÃO SAPO",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1092",
+    "descricao": "MILHO VERDE BANDEJA",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "bdj",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1093",
+    "descricao": "MILHO VERDE UNIDADE",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "un",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1094",
+    "descricao": "MORANGO",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1095",
+    "descricao": "NOZES BANDEJA",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "bdj",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1096",
+    "descricao": "OVO BRANCO EMB. 20 DZ",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "dz",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1097",
+    "descricao": "OVO CAIPIRA 30 DZ",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "dz",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1098",
+    "descricao": "OVO CAIPIRA EMB. 20 DZ",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "dz",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1099",
+    "descricao": "OVO CODORNA CONSERVA",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "dz",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1100",
+    "descricao": "OVO DE CODORNA",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "dz",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1101",
+    "descricao": "OVO EXTRA",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "dz",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1102",
+    "descricao": "OVO FILMADO",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "dz",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1103",
+    "descricao": "OVO GRANDE",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "dz",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1104",
+    "descricao": "OVO JUMBO 20 DZ",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "dz",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1105",
+    "descricao": "OVO JUMBO 30 DZ",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "dz",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1106",
+    "descricao": "OVO MÉDIO",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "dz",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1107",
+    "descricao": "OVO VERMELHO 30 DZ",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "dz",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1108",
+    "descricao": "OVO VERMELHO EMB. 20 DZ",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "dz",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1109",
+    "descricao": "PEPINO EUREKA",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1110",
+    "descricao": "PEPINO JAPONÊS",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1111",
+    "descricao": "PEPINO VERDE",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1112",
+    "descricao": "PERA DANJU 18 KG",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 18
+  },
+  {
+    "reduzido": "1113",
+    "descricao": "PERA PORTUGUESA",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1114",
+    "descricao": "PERA PT 120 (MIÚDA)",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1115",
+    "descricao": "PERA PT GRAÚDA 18 KG",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 18
+  },
+  {
+    "reduzido": "1116",
+    "descricao": "PERA WILLIANS 10 KG",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 10
+  },
+  {
+    "reduzido": "1117",
+    "descricao": "PERA WILLIANS 18 KG",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 18
+  },
+  {
+    "reduzido": "1118",
+    "descricao": "PIMENTÃO AMARELO",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1119",
+    "descricao": "PIMENTÃO VERDE",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1120",
+    "descricao": "PIMENTÃO VERMELHO",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1121",
+    "descricao": "PITAYA 10 KG",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 10
+  },
+  {
+    "reduzido": "1122",
+    "descricao": "PITAYA 4 KG",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 4
+  },
+  {
+    "reduzido": "1123",
+    "descricao": "PÊSSEGO NACIONAL 6 KG",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 6
+  },
+  {
+    "reduzido": "1124",
+    "descricao": "QUIABO",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1125",
+    "descricao": "REPOLHO BRANCO",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1126",
+    "descricao": "REPOLHO ROXO",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1127",
+    "descricao": "TOMATE 6",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1128",
+    "descricao": "TOMATE 7",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1129",
+    "descricao": "TOMATE 8",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1130",
+    "descricao": "TOMATE ITALIANO",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1131",
+    "descricao": "TÂMARA",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1132",
+    "descricao": "UVA ISÍS EMBALADA",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1133",
+    "descricao": "UVA ITÁLIA CX 8 KG",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "cx",
+    "taraKg": 0,
+    "pesoKg": 8
+  },
+  {
+    "reduzido": "1134",
+    "descricao": "UVA RED 8 KG",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 8
+  },
+  {
+    "reduzido": "1135",
+    "descricao": "UVA RED GLOBE",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1136",
+    "descricao": "UVA THOMPSON",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1137",
+    "descricao": "UVA VITÓRIA",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1138",
+    "descricao": "UVAS PASSAS",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1139",
+    "descricao": "VAGEM BRANCA",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  },
+  {
+    "reduzido": "1140",
+    "descricao": "VAGEM VERDE",
+    "palletTotal": 0,
+    "lastro": 0,
+    "unidade": true,
+    "tipoUnidade": "kg",
+    "taraKg": 0,
+    "pesoKg": 0
+  }
+]

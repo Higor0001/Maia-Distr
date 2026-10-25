@@ -13,6 +13,7 @@ export interface EstoqueItem {
   unidade?: boolean
   tipoUnidade?: TipoUnidade
   taraKg?: number
+  pesoKg?: number
 }
 
 const DATA_DIR = path.join(process.cwd(), "data")
@@ -64,6 +65,7 @@ export async function GET() {
             unidade: Boolean(r.unidade),
             tipoUnidade: (r.tipo_unidade || r.tipoUnidade || "cx") as TipoUnidade,
             taraKg: Number(r.tara_kg ?? r.taraKg ?? 0),
+            pesoKg: Number(r.peso_kg ?? r.pesoKg ?? 0),
           }))
         : []
       return NextResponse.json({ ok: true, items: mapped })
@@ -96,6 +98,7 @@ export async function POST(request: Request) {
       const unidade = Boolean(raw?.unidade)
       const tipoUnidade = (raw?.tipoUnidade || "cx") as TipoUnidade
       const taraKg = Math.max(0, Number(raw?.taraKg) || 0)
+      const pesoKg = Math.max(0, Number(raw?.pesoKg) || 0)
 
       if (reduzido && descricao) {
         normalizedItems.push({
@@ -106,6 +109,7 @@ export async function POST(request: Request) {
           unidade,
           tipoUnidade,
           taraKg,
+          pesoKg,
         })
       }
     }
@@ -125,6 +129,7 @@ export async function POST(request: Request) {
       unidade: Boolean(item.unidade),
       tipo_unidade: item.tipoUnidade || "cx",
       tara_kg: item.taraKg || 0,
+      peso_kg: item.pesoKg || 0,
       ativo: true,
       updated_at: new Date().toISOString(),
     }))

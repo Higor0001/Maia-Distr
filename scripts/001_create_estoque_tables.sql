@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS public.estoque_itens (
   unidade BOOLEAN NOT NULL DEFAULT FALSE,
   tipo_unidade TEXT NOT NULL DEFAULT 'cx', -- 'kg' | 'cx' | 'sc' | 'bdj' | 'dz' | 'un'
   tara_kg NUMERIC(6, 3) NOT NULL DEFAULT 0,
+  peso_kg NUMERIC(10, 3) NOT NULL DEFAULT 0,
   ativo BOOLEAN NOT NULL DEFAULT TRUE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
