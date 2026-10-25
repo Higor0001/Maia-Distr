@@ -1,0 +1,213 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  background-image: url("https://hebbkx1anhila5yf.public.blob.vercel-storage.com/images-JqtI3BJcNfpYpDh4QkuniylOURB50J.jpeg");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  font-family: "Segoe UI", sans-serif;
+  color: #333;
+  padding: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  margin: 0;
+}
+
+.container {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  padding: 20px;
+  border-radius: 20px;
+  max-width: 1000px;
+  width: 100%;
+  box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+}
+
+header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+header h1 {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: #1a2a6c;
+}
+
+header h1 i {
+  background: #1a2a6c;
+  color: #fdbb2d;
+  padding: 10px;
+  border-radius: 50%;
+}
+
+label {
+  font-weight: bold;
+  display: block;
+  margin-top: 10px;
+}
+
+input,
+button,
+select {
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  margin-top: 5px;
+  box-sizing: border-box;
+}
+
+input:focus,
+select:focus {
+  border-color: #1a2a6c;
+  outline: none;
+}
+
+button {
+  background: linear-gradient(to right, #1a2a6c, #b21f1f);
+  color: white;
+  cursor: pointer;
+  transition: transform 0.2s;
+  margin-top: 10px;
+}
+
+button:hover {
+  transform: translateY(-2px);
+}
+
+.file-upload {
+  background: #1a2a6c;
+  color: white;
+  display: inline-block;
+  padding: 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-top: 5px;
+  width: 100%;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+canvas {
+  width: 100%;
+  border: 2px dashed #1a2a6c;
+  border-radius: 10px;
+  margin-top: 10px;
+}
+
+.status {
+  margin-top: 10px;
+  padding: 10px;
+  border-radius: 8px;
+  display: none;
+  transition: all 0.3s ease;
+  opacity: 0;
+  max-height: 0;
+  overflow: hidden;
+}
+
+.status.success {
+  background: #d4edda;
+  color: #155724;
+  display: block;
+  opacity: 1;
+  max-height: 100px;
+  padding: 10px;
+  margin-top: 10px;
+  border-radius: 8px;
+}
+
+.status.error {
+  background: #f8d7da;
+  color: #721c24;
+  display: block;
+  opacity: 1;
+  max-height: 100px;
+  padding: 10px;
+  margin-top: 10px;
+  border-radius: 8px;
+}
+
+.status.processing {
+  background: #fff3cd;
+  color: #856404;
+  display: block;
+  opacity: 1;
+  max-height: 100px;
+  padding: 10px;
+  margin-top: 10px;
+  border-radius: 8px;
+}
+
+.galeria {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.item {
+  background: rgba(248, 249, 250, 0.95);
+  backdrop-filter: blur(5px);
+  padding: 10px;
+  border-radius: 12px;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+}
+
+.item img {
+  width: 100%;
+  border-radius: 10px;
+}
+
+#file-name {
+  margin-top: 5px;
+  font-size: 0.9rem;
+  color: #666;
+}
+
+/* Estilos para o botão de envio do Telegram */
+.telegram-btn {
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.telegram-btn.sending {
+  background: #6c757d !important;
+  pointer-events: none;
+}
+
+.telegram-btn.sending::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 100%;
+  background-color: rgba(255, 255, 255, 0.2);
+  animation: loading 2s infinite linear;
+}
+
+@keyframes loading {
+  0% {
+    width: 0;
+  }
+  50% {
+    width: 100%;
+  }
+  100% {
+    width: 0;
+  }
+}
+
+/* Estilos para botões desabilitados */
+button:disabled {
+  cursor: not-allowed !important;
+}
