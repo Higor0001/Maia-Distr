@@ -42,3 +42,16 @@ CREATE TABLE IF NOT EXISTS public.perdas_ocorrencias (
   status TEXT NOT NULL DEFAULT 'sent',
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- 4. Tabela de Usuários (Login Triagem Filial / Hortigranjeiros)
+CREATE TABLE IF NOT EXISTS public.triagem_usuarios (
+  usuario TEXT PRIMARY KEY,
+  nome TEXT NOT NULL,
+  email TEXT,
+  senha TEXT NOT NULL,
+  unidade TEXT NOT NULL DEFAULT 'filial', -- 'filial' | 'matriz'
+  turno TEXT DEFAULT 'Matutino',
+  can_register BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);

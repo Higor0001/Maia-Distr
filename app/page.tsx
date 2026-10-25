@@ -65,6 +65,27 @@ export default function Home() {
   const [filterStatus, setFilterStatus] = useState("")
   const [selectedOccurrence, setSelectedOccurrence] = useState<Occurrence | null>(null)
 
+  // Estados da tela de Login e Primeiro Acesso
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [loginScope, setLoginScope] = useState<"filial" | "matriz">("filial")
+  const [loginForm, setLoginForm] = useState({ usuario: "", senha: "" })
+  const [loginError, setLoginError] = useState("")
+  const [isLoggingIn, setIsLoggingIn] = useState(false)
+  const [loggedUser, setLoggedUser] = useState<{ usuario: string; nome?: string; unidade?: string } | null>(null)
+
+  const [firstAccessOpen, setFirstAccessOpen] = useState(false)
+  const [firstAccessStep, setFirstAccessStep] = useState<"lookup" | "register" | "done">("lookup")
+  const [firstAccessForm, setFirstAccessForm] = useState({
+    usuario: "",
+    nome: "",
+    email: "",
+    senha: "",
+    confirmSenha: "",
+  })
+  const [firstAccessError, setFirstAccessError] = useState("")
+  const [firstAccessSuccess, setFirstAccessSuccess] = useState("")
+  const [firstAccessLoading, setFirstAccessLoading] = useState(false)
+
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const streamRef = useRef<MediaStream | null>(null)
@@ -74,6 +95,26 @@ export default function Home() {
     // Limpar dados legados de bebidas/triagem
     localStorage.removeItem("bicadaData")
     localStorage.removeItem("occurrences")
+
+    if (localStorage.getItem("triagem-auth") === "true") {
+      setIsAuthenticated(true)
+    }
+    const savedScope = localStorage.getItem("triagem-scope")
+    if (savedScope === "filial" || savedScope === "matriz") {
+      setLoginScope(savedScope)
+    }
+    const savedTriagemUser = localStorage.getItem("triagem-user")
+    if (savedTriagemUser) {
+      try {
+        const parsedUser = JSON.parse(savedTriagemUser)
+        setLoggedUser(parsedUser)
+        if (parsedUser?.nome || parsedUser?.usuario) {
+          setOperatorName(parsedUser.nome || parsedUser.usuario)
+        }
+      } catch {
+        setLoggedUser(null)
+      }
+    }
 
     const envBot = typeof window !== "undefined" ? process.env.NEXT_PUBLIC_TELEGRAM_BOT : undefined
     const envChat = typeof window !== "undefined" ? process.env.NEXT_PUBLIC_TELEGRAM_CHAT : undefined
@@ -519,6 +560,436 @@ export default function Home() {
 
   const totalCurrentWeight = items.reduce((acc, item) => acc + item.weightKg, 0)
 
+  const handleLoginSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    const u = loginForm.usuario.trim()
+    const s = loginForm.senha.trim()
+    if (!u || !s) {
+      setLoginError("Preencha usuario e senha para continuar.")
+      return
+    }
+    setIsLoggingIn(true)
+    setLoginError("")
+    try {
+      const res = await fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ usuario: u, senha: s, scope: loginScope }),
+      })
+      const data = await res.json()
+      if (!res.ok || !data?.ok) {
+        setLoginError(data?.error || "Usuario ou senha invalidos.")
+        return
+      }
+      localStorage.setItem("triagem-auth", "true")
+      localStorage.setItem("triagem-scope", loginScope)
+      if (data?.user?.usuario) {
+        localStorage.setItem("triagem-user", JSON.stringify(data.user))
+        setLoggedUser(data.user)
+        const opName = data.user.nome || data.user.usuario
+        setOperatorName(opName)
+        localStorage.setItem(STORAGE_KEYS.operator, opName)
+      }
+      setIsAuthenticated(true)
+    } catch (err) {
+      console.error("Login request error:", err)
+      setLoginError("Nao foi possivel autenticar. Tente novamente.")
+    } finally {
+      setIsLoggingIn(false)
+    }
+  }
+
+  const handleLogout = () => {
+    localStorage.removeItem("triagem-auth")
+    localStorage.removeItem("triagem-user")
+    setLoggedUser(null)
+    setIsAuthenticated(false)
+    setLoginForm({ usuario: "", senha: "" })
+  }
+
+  const handleFirstAccessLookup = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setFirstAccessError("")
+    setFirstAccessSuccess("")
+    if (!firstAccessForm.usuario.trim()) {
+      setFirstAccessError("Informe a matricula para continuar.")
+      return
+    }
+    setFirstAccessLoading(true)
+    try {
+      const res = await fetch("/api/first-access", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ usuario: firstAccessForm.usuario.trim() }),
+      })
+      const data = await res.json()
+      if (!res.ok || !data?.ok) {
+        setFirstAccessError(data?.error || "Matricula nao encontrada.")
+        return
+      }
+      setFirstAccessForm((prev) => ({ ...prev, nome: data.user?.nome || prev.usuario.toUpperCase() }))
+      setFirstAccessStep("register")
+    } catch {
+      setFirstAccessError("Erro ao verificar matricula.")
+    } finally {
+      setFirstAccessLoading(false)
+    }
+  }
+
+  const handleFirstAccessRegister = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setFirstAccessError("")
+    setFirstAccessSuccess("")
+    if (!firstAccessForm.email.trim() || !firstAccessForm.senha) {
+      setFirstAccessError("Email e senha sao obrigatorios.")
+      return
+    }
+    if (firstAccessForm.senha !== firstAccessForm.confirmSenha) {
+      setFirstAccessError("As senhas nao conferem.")
+      return
+    }
+    setFirstAccessLoading(true)
+    try {
+      const res = await fetch("/api/first-access", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          usuario: firstAccessForm.usuario.trim(),
+          nome: firstAccessForm.nome.trim(),
+          email: firstAccessForm.email.trim(),
+          senha: firstAccessForm.senha,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok || !data?.ok) {
+        setFirstAccessError(data?.error || "Nao foi possivel concluir o cadastro.")
+        return
+      }
+      setFirstAccessSuccess("Cadastro concluido. Voce ja pode fazer login.")
+      setFirstAccessStep("done")
+    } catch {
+      setFirstAccessError("Erro ao concluir cadastro.")
+    } finally {
+      setFirstAccessLoading(false)
+    }
+  }
+
+  // TELA DE LOGIN
+  if (!isAuthenticated) {
+    return (
+      <div className="login-shell site-login">
+        <style>{`
+          .site-login {
+            background: linear-gradient(135deg, #0f172a 0%, #1a2a6c 55%, #2b48a0 100%);
+            background-position: 50%;
+            background-repeat: no-repeat;
+            background-size: cover;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 32px 20px;
+            display: flex;
+            overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+          }
+          .site-card {
+            -webkit-backdrop-filter: blur(14px);
+            backdrop-filter: blur(14px);
+            background: rgba(255, 255, 255, 0.92);
+            border: 1px solid rgba(26, 42, 108, 0.12);
+            border-radius: 16px;
+            flex-direction: column;
+            gap: 12px;
+            width: min(420px, 100%);
+            padding: 28px 26px;
+            animation: 0.5s ease-out login-rise;
+            display: flex;
+            box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+          }
+          .site-title {
+            text-align: center;
+            color: #1a2a6c;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            font-size: 20px;
+            font-weight: 700;
+          }
+          .site-subtitle {
+            text-align: center;
+            color: #5b647a;
+            margin: 0 0 8px;
+            font-size: 13px;
+          }
+          .site-form {
+            flex-direction: column;
+            gap: 10px;
+            display: flex;
+          }
+          .site-form label {
+            color: #1a2a6c;
+            font-size: 12px;
+            font-weight: 600;
+          }
+          .site-form input, .site-form select {
+            background: #f9fbff;
+            border: 1px solid #ccd3e5;
+            border-radius: 10px;
+            padding: 10px 12px;
+            font-family: inherit;
+            font-size: 14px;
+            color: #1e293b;
+          }
+          .site-form input:focus, .site-form select:focus {
+            border-color: #1a2a6c;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(26, 42, 108, 0.15);
+          }
+          .site-form button {
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #fff;
+            cursor: pointer;
+            background: linear-gradient(135deg, #1a2a6c, #2b48a0);
+            border: none;
+            border-radius: 10px;
+            margin-top: 6px;
+            padding: 12px 16px;
+            font-size: 13px;
+            font-weight: 700;
+            transition: transform 0.2s, box-shadow 0.2s;
+          }
+          .site-form button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 22px rgba(26, 42, 108, 0.25);
+          }
+          .login-error {
+            color: #b4232a;
+            background: rgba(220, 53, 69, 0.12);
+            border-radius: 8px;
+            padding: 8px 10px;
+            font-size: 12px;
+            font-weight: 600;
+          }
+          .login-success {
+            color: #1b6e31;
+            background: rgba(40, 167, 69, 0.12);
+            border-radius: 8px;
+            padding: 8px 10px;
+            font-size: 12px;
+            font-weight: 600;
+          }
+          @keyframes login-rise {
+            0% { opacity: 0; transform: translateY(18px); }
+            100% { opacity: 1; transform: translateY(0); }
+          }
+        `}</style>
+
+        <div className="login-card site-card">
+          <div className="site-title">Triagem Filial</div>
+          <p className="site-subtitle">Acesso ao sistema de triagem &amp; hortigranjeiros</p>
+
+          <form onSubmit={handleLoginSubmit} className="login-form site-form">
+            <label htmlFor="login-usuario">Usuario</label>
+            <input
+              id="login-usuario"
+              type="text"
+              autoComplete="username"
+              value={loginForm.usuario}
+              onChange={(e) => setLoginForm({ ...loginForm, usuario: e.target.value })}
+              placeholder="Digite seu usuario"
+            />
+
+            <label htmlFor="login-scope">Unidade</label>
+            <select
+              id="login-scope"
+              value={loginScope}
+              onChange={(e) => {
+                const nextScope = e.target.value === "matriz" ? "matriz" : "filial"
+                setLoginScope(nextScope)
+                localStorage.setItem("triagem-scope", nextScope)
+              }}
+            >
+              <option value="filial">Filial</option>
+              <option value="matriz">Matriz</option>
+            </select>
+
+            <label htmlFor="login-senha">Senha</label>
+            <input
+              id="login-senha"
+              type="password"
+              autoComplete="current-password"
+              value={loginForm.senha}
+              onChange={(e) => setLoginForm({ ...loginForm, senha: e.target.value })}
+              placeholder="Digite sua senha"
+            />
+
+            {loginError && <div className="login-error">{loginError}</div>}
+
+            <button type="submit" disabled={isLoggingIn}>
+              {isLoggingIn ? "Entrando..." : "Entrar"}
+            </button>
+          </form>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: "6px", marginTop: "6px" }}>
+            <button
+              type="button"
+              onClick={() => {
+                setFirstAccessOpen(true)
+                setFirstAccessStep("lookup")
+                setFirstAccessError("")
+                setFirstAccessSuccess("")
+                setFirstAccessForm({ usuario: "", nome: "", email: "", senha: "", confirmSenha: "" })
+              }}
+              style={{
+                border: "none",
+                background: "transparent",
+                color: "#1a2a6c",
+                fontWeight: "bold",
+                fontSize: "12px",
+                cursor: "pointer",
+              }}
+            >
+              Primeiro acesso / Cadastrar senha
+            </button>
+            <a
+              href="/gerenciador-estoque"
+              style={{
+                textAlign: "center",
+                fontSize: "12px",
+                color: "#1a2a6c",
+                fontWeight: "bold",
+                textDecoration: "none",
+              }}
+            >
+              Gerenciador de estoque
+            </a>
+          </div>
+        </div>
+
+        {firstAccessOpen && (
+          <>
+            <div
+              onClick={() => setFirstAccessOpen(false)}
+              style={{
+                position: "fixed",
+                inset: 0,
+                background: "rgba(0,0,0,0.45)",
+                backdropFilter: "blur(3px)",
+                zIndex: 2100,
+              }}
+            />
+            <div
+              style={{
+                position: "fixed",
+                top: "50%",
+                left: "50%",
+                transform: "translate(-50%, -50%)",
+                width: "min(460px, 92vw)",
+                background: "white",
+                borderRadius: "16px",
+                padding: "22px",
+                boxShadow: "0 20px 50px rgba(0,0,0,0.3)",
+                zIndex: 2101,
+              }}
+            >
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+                <strong style={{ color: "#1a2a6c", fontSize: "16px" }}>Primeiro Acesso</strong>
+                <button
+                  type="button"
+                  onClick={() => setFirstAccessOpen(false)}
+                  style={{ border: "none", background: "transparent", fontSize: "20px", cursor: "pointer", color: "#666" }}
+                >
+                  ×
+                </button>
+              </div>
+
+              {firstAccessStep === "lookup" && (
+                <form onSubmit={handleFirstAccessLookup} className="login-form site-form">
+                  <label htmlFor="first-usuario">Matrícula ou Usuário</label>
+                  <input
+                    id="first-usuario"
+                    type="text"
+                    value={firstAccessForm.usuario}
+                    onChange={(e) => setFirstAccessForm({ ...firstAccessForm, usuario: e.target.value })}
+                    placeholder="Ex: higor ou 000382"
+                  />
+                  {firstAccessError && <div className="login-error">{firstAccessError}</div>}
+                  <button type="submit" disabled={firstAccessLoading}>
+                    {firstAccessLoading ? "Verificando..." : "Continuar"}
+                  </button>
+                </form>
+              )}
+
+              {firstAccessStep === "register" && (
+                <form onSubmit={handleFirstAccessRegister} className="login-form site-form">
+                  <label>Nome</label>
+                  <input
+                    type="text"
+                    value={firstAccessForm.nome}
+                    onChange={(e) => setFirstAccessForm({ ...firstAccessForm, nome: e.target.value })}
+                  />
+                  <label htmlFor="first-email">Email</label>
+                  <input
+                    id="first-email"
+                    type="email"
+                    value={firstAccessForm.email}
+                    onChange={(e) => setFirstAccessForm({ ...firstAccessForm, email: e.target.value })}
+                    placeholder="email@empresa.com"
+                  />
+                  <label htmlFor="first-senha">Nova Senha</label>
+                  <input
+                    id="first-senha"
+                    type="password"
+                    value={firstAccessForm.senha}
+                    onChange={(e) => setFirstAccessForm({ ...firstAccessForm, senha: e.target.value })}
+                    placeholder="Crie uma senha"
+                  />
+                  <label htmlFor="first-confirm">Confirmar Senha</label>
+                  <input
+                    id="first-confirm"
+                    type="password"
+                    value={firstAccessForm.confirmSenha}
+                    onChange={(e) => setFirstAccessForm({ ...firstAccessForm, confirmSenha: e.target.value })}
+                    placeholder="Confirme a senha"
+                  />
+                  {firstAccessError && <div className="login-error">{firstAccessError}</div>}
+                  {firstAccessSuccess && <div className="login-success">{firstAccessSuccess}</div>}
+                  <button type="submit" disabled={firstAccessLoading}>
+                    {firstAccessLoading ? "Salvando..." : "Concluir cadastro"}
+                  </button>
+                </form>
+              )}
+
+              {firstAccessStep === "done" && (
+                <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                  <div className="login-success">{firstAccessSuccess}</div>
+                  <button
+                    type="button"
+                    onClick={() => setFirstAccessOpen(false)}
+                    style={{
+                      border: "none",
+                      borderRadius: "10px",
+                      padding: "12px 16px",
+                      fontWeight: 700,
+                      fontSize: "12px",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.08em",
+                      color: "white",
+                      background: "linear-gradient(135deg, #1a2a6c, #2b48a0)",
+                      cursor: "pointer",
+                    }}
+                  >
+                    Voltar ao login
+                  </button>
+                </div>
+              )}
+            </div>
+          </>
+        )}
+      </div>
+    )
+  }
+
   // TELA 1: Registrar Perda
   if (currentScreen === "register") {
     return (
@@ -526,9 +997,34 @@ export default function Home() {
         <div className="container">
           <header>
             <h1>🥬 Controle de Perdas — Hortigranjeiros</h1>
-            <p style={{ fontSize: "14px", color: "#666", marginTop: "5px" }}>
-              {connectionStatus === "online" ? "🟢 Online" : "🔴 Offline"}
-            </p>
+            <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "12px", marginTop: "6px", flexWrap: "wrap" }}>
+              <span style={{ fontSize: "14px", color: "#666" }}>
+                {connectionStatus === "online" ? "🟢 Online" : "🔴 Offline"}
+              </span>
+              {loggedUser && (
+                <span style={{ fontSize: "13px", color: "#1a2a6c", fontWeight: 700 }}>
+                  👤 {loggedUser.nome || loggedUser.usuario} ({loginScope.toUpperCase()})
+                </span>
+              )}
+              <button
+                type="button"
+                onClick={handleLogout}
+                style={{
+                  background: "#dc3545",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "6px",
+                  padding: "4px 10px",
+                  fontSize: "12px",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  marginTop: 0,
+                  width: "auto",
+                }}
+              >
+                🚪 Sair
+              </button>
+            </div>
           </header>
 
           {/* Seleção de Categoria */}
