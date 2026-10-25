@@ -1,0 +1,20 @@
+[
+  {
+    "usuario": "admin",
+    "nome": "ALEXANDRE HIGOR COSTA QUEIROZ",
+    "email": "admin@maiadistribuidora.com",
+    "senha": "123456",
+    "unidade": "filial",
+    "turno": "Matutino",
+    "canRegister": true
+  },
+  {
+    "usuario": "higor",
+    "nome": "ALEXANDRE HIGOR COSTA QUEIROZ",
+    "email": "higor@maiadistribuidora.com",
+    "senha": "123456",
+    "unidade": "filial",
+    "turno": "Matutino",
+    "canRegister": true
+  }
+]

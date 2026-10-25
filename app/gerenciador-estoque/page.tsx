@@ -492,35 +492,125 @@ export default function GerenciadorEstoquePage() {
   const renderAreaFields = (
     item: StockItem,
     title: string,
-    palMap: Record<string, string>,
-    setPalMap: React.Dispatch<React.SetStateAction<Record<string, string>>>,
-    lasMap: Record<string, string>,
-    setLasMap: React.Dispatch<React.SetStateAction<Record<string, string>>>,
-    farMap: Record<string, string>,
-    setFarMap: React.Dispatch<React.SetStateAction<Record<string, string>>>,
-    uniMap: Record<string, string>,
-    setUniMap: React.Dispatch<React.SetStateAction<Record<string, string>>>,
-    isQuick: boolean
+    caixasMap: Record<string, string>,
+    setCaixasMap: React.Dispatch<React.SetStateAction<Record<string, string>>>,
+    sacosMap: Record<string, string>,
+    setSacosMap: React.Dispatch<React.SetStateAction<Record<string, string>>>
   ) => {
-    const unitTag = item.tipoUnidade || "cx"
-    const unitLabel = UNIDADE_LABELS[unitTag] || "Caixa (cx)"
     const hasTare = (item.taraKg || 0) > 0
 
     return (
       <div className="stock-area">
         <div className="stock-area-title">
-          {title} — Unidade: {unitLabel}
+          {title} — Quantidade em Caixas / Sacos
           {hasTare ? ` (Tara: ${item.taraKg} kg/cx)` : ""}
         </div>
-        <div className="stock-fields">
-          {isQuick ? (
-            <div className="field field-total">
-              <span>Total direto ({unitTag.toUpperCase()})</span>
+        <div
+          className="stock-fields"
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+            gap: "10px",
+          }}
+        >
+          <div className="field">
+            <span>📦 Caixas (CX)</span>
+            <div className="stepper">
+              <button
+                type="button"
+                onClick={() =>
+                  setCaixasMap((prev) => ({
+                    ...prev,
+                    [item.reduzido]: stepValue(prev[item.reduzido], -1),
+                  }))
+                }
+              >
+                -
+              </button>
+              <input
+                type="text"
+                inputMode="tel"
+                pattern="[0-9+]*"
+                placeholder="0"
+                value={caixasMap[item.reduzido] || ""}
+                onChange={(e) => {
+                  const val = sanitizeExpression(e.target.value)
+                  setCaixasMap((prev) => ({ ...prev, [item.reduzido]: val }))
+                }}
+                onBlur={(e) =>
+                  setCaixasMap((prev) => ({
+                    ...prev,
+                    [item.reduzido]: normalizeNumericString(e.target.value),
+                  }))
+                }
+              />
+              <button
+                type="button"
+                onClick={() =>
+                  setCaixasMap((prev) => ({
+                    ...prev,
+                    [item.reduzido]: stepValue(prev[item.reduzido], 1),
+                  }))
+                }
+              >
+                +
+              </button>
+            </div>
+          </div>
+
+          <div className="field">
+            <span>🛍️ Sacos (SC)</span>
+            <div className="stepper">
+              <button
+                type="button"
+                onClick={() =>
+                  setSacosMap((prev) => ({
+                    ...prev,
+                    [item.reduzido]: stepValue(prev[item.reduzido], -1),
+                  }))
+                }
+              >
+                -
+              </button>
+              <input
+                type="text"
+                inputMode="tel"
+                pattern="[0-9+]*"
+                placeholder="0"
+                value={sacosMap[item.reduzido] || ""}
+                onChange={(e) => {
+                  const val = sanitizeExpression(e.target.value)
+                  setSacosMap((prev) => ({ ...prev, [item.reduzido]: val }))
+                }}
+                onBlur={(e) =>
+                  setSacosMap((prev) => ({
+                    ...prev,
+                    [item.reduzido]: normalizeNumericString(e.target.value),
+                  }))
+                }
+              />
+              <button
+                type="button"
+                onClick={() =>
+                  setSacosMap((prev) => ({
+                    ...prev,
+                    [item.reduzido]: stepValue(prev[item.reduzido], 1),
+                  }))
+                }
+              >
+                +
+              </button>
+            </div>
+          </div>
+
+          {hasTare && (
+            <div className="field">
+              <span>Qtd. Caixas p/ Desconto de Tara ({item.taraKg} kg/cx)</span>
               <div className="stepper">
                 <button
                   type="button"
                   onClick={() =>
-                    setFarMap((prev) => ({
+                    setCaixasTara((prev) => ({
                       ...prev,
                       [item.reduzido]: stepValue(prev[item.reduzido], -1),
                     }))
@@ -532,22 +622,15 @@ export default function GerenciadorEstoquePage() {
                   type="text"
                   inputMode="tel"
                   pattern="[0-9+]*"
-                  value={farMap[item.reduzido] || ""}
-                  onChange={(e) => {
-                    const val = sanitizeExpression(e.target.value)
-                    setFarMap((prev) => ({ ...prev, [item.reduzido]: val }))
-                    if (palMap[item.reduzido]) {
-                      setPalMap((prev) => ({ ...prev, [item.reduzido]: "" }))
-                    }
-                    if (lasMap[item.reduzido]) {
-                      setLasMap((prev) => ({ ...prev, [item.reduzido]: "" }))
-                    }
-                    if (uniMap[item.reduzido]) {
-                      setUniMap((prev) => ({ ...prev, [item.reduzido]: "" }))
-                    }
-                  }}
+                  value={caixasTara[item.reduzido] || ""}
+                  onChange={(e) =>
+                    setCaixasTara((prev) => ({
+                      ...prev,
+                      [item.reduzido]: sanitizeExpression(e.target.value),
+                    }))
+                  }
                   onBlur={(e) =>
-                    setFarMap((prev) => ({
+                    setCaixasTara((prev) => ({
                       ...prev,
                       [item.reduzido]: normalizeNumericString(e.target.value),
                     }))
@@ -556,7 +639,7 @@ export default function GerenciadorEstoquePage() {
                 <button
                   type="button"
                   onClick={() =>
-                    setFarMap((prev) => ({
+                    setCaixasTara((prev) => ({
                       ...prev,
                       [item.reduzido]: stepValue(prev[item.reduzido], 1),
                     }))
@@ -565,198 +648,7 @@ export default function GerenciadorEstoquePage() {
                   +
                 </button>
               </div>
-              <div className="hint">
-                Modo rápido usa o total direto em {unitTag.toUpperCase()}.
-              </div>
             </div>
-          ) : (
-            <>
-              <div className="field">
-                <span>Palete inteiro ({item.palletTotal || 0} {unitTag})</span>
-                <div className="stepper">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setPalMap((prev) => ({
-                        ...prev,
-                        [item.reduzido]: stepValue(prev[item.reduzido], -1),
-                      }))
-                    }
-                  >
-                    -
-                  </button>
-                  <input
-                    type="text"
-                    inputMode="tel"
-                    pattern="[0-9+]*"
-                    value={palMap[item.reduzido] || ""}
-                    onChange={(e) =>
-                      setPalMap((prev) => ({
-                        ...prev,
-                        [item.reduzido]: sanitizeExpression(e.target.value),
-                      }))
-                    }
-                    onBlur={(e) =>
-                      setPalMap((prev) => ({
-                        ...prev,
-                        [item.reduzido]: normalizeNumericString(e.target.value),
-                      }))
-                    }
-                  />
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setPalMap((prev) => ({
-                        ...prev,
-                        [item.reduzido]: stepValue(prev[item.reduzido], 1),
-                      }))
-                    }
-                  >
-                    +
-                  </button>
-                </div>
-              </div>
-
-              <div className="field">
-                <span>Camada / Lastro ({item.lastro || 0} {unitTag})</span>
-                <div className="stepper">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setLasMap((prev) => ({
-                        ...prev,
-                        [item.reduzido]: stepValue(prev[item.reduzido], -1),
-                      }))
-                    }
-                  >
-                    -
-                  </button>
-                  <input
-                    type="text"
-                    inputMode="tel"
-                    pattern="[0-9+]*"
-                    value={lasMap[item.reduzido] || ""}
-                    onChange={(e) =>
-                      setLasMap((prev) => ({
-                        ...prev,
-                        [item.reduzido]: sanitizeExpression(e.target.value),
-                      }))
-                    }
-                    onBlur={(e) =>
-                      setLasMap((prev) => ({
-                        ...prev,
-                        [item.reduzido]: normalizeNumericString(e.target.value),
-                      }))
-                    }
-                  />
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setLasMap((prev) => ({
-                        ...prev,
-                        [item.reduzido]: stepValue(prev[item.reduzido], 1),
-                      }))
-                    }
-                  >
-                    +
-                  </button>
-                </div>
-              </div>
-
-              <div className="field">
-                <span>Avulso ({unitTag.toUpperCase()})</span>
-                <div className="stepper">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setFarMap((prev) => ({
-                        ...prev,
-                        [item.reduzido]: stepValue(prev[item.reduzido], -1),
-                      }))
-                    }
-                  >
-                    -
-                  </button>
-                  <input
-                    type="text"
-                    inputMode="tel"
-                    pattern="[0-9+]*"
-                    value={farMap[item.reduzido] || ""}
-                    onChange={(e) =>
-                      setFarMap((prev) => ({
-                        ...prev,
-                        [item.reduzido]: sanitizeExpression(e.target.value),
-                      }))
-                    }
-                    onBlur={(e) =>
-                      setFarMap((prev) => ({
-                        ...prev,
-                        [item.reduzido]: normalizeNumericString(e.target.value),
-                      }))
-                    }
-                  />
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setFarMap((prev) => ({
-                        ...prev,
-                        [item.reduzido]: stepValue(prev[item.reduzido], 1),
-                      }))
-                    }
-                  >
-                    +
-                  </button>
-                </div>
-              </div>
-
-              {hasTare && (
-                <div className="field">
-                  <span>Qtd. Caixas p/ Desconto de Tara ({item.taraKg} kg/cx)</span>
-                  <div className="stepper">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setCaixasTara((prev) => ({
-                          ...prev,
-                          [item.reduzido]: stepValue(prev[item.reduzido], -1),
-                        }))
-                      }
-                    >
-                      -
-                    </button>
-                    <input
-                      type="text"
-                      inputMode="tel"
-                      pattern="[0-9+]*"
-                      value={caixasTara[item.reduzido] || ""}
-                      onChange={(e) =>
-                        setCaixasTara((prev) => ({
-                          ...prev,
-                          [item.reduzido]: sanitizeExpression(e.target.value),
-                        }))
-                      }
-                      onBlur={(e) =>
-                        setCaixasTara((prev) => ({
-                          ...prev,
-                          [item.reduzido]: normalizeNumericString(e.target.value),
-                        }))
-                      }
-                    />
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setCaixasTara((prev) => ({
-                          ...prev,
-                          [item.reduzido]: stepValue(prev[item.reduzido], 1),
-                        }))
-                      }
-                    >
-                      +
-                    </button>
-                  </div>
-                </div>
-              )}
-            </>
           )}
         </div>
       </div>
@@ -768,64 +660,57 @@ export default function GerenciadorEstoquePage() {
       return renderAreaFields(
         item,
         "Picking",
-        pickingPallets,
-        setPickingPallets,
-        pickingLastros,
-        setPickingLastros,
         pickingFardos,
         setPickingFardos,
-        pickingUnidades,
-        setPickingUnidades,
-        quickMode
+        pickingPallets,
+        setPickingPallets
       )
     }
     if (activeTab === "avarias") {
       return renderAreaFields(
         item,
         "Avarias",
-        avariaPallets,
-        setAvariaPallets,
-        avariaLastros,
-        setAvariaLastros,
         avariaFardos,
         setAvariaFardos,
-        avariaUnidades,
-        setAvariaUnidades,
-        quickMode
+        avariaPallets,
+        setAvariaPallets
       )
     }
     return renderAreaFields(
       item,
       "Principal",
-      pallets,
-      setPallets,
-      lastros,
-      setLastros,
       fardos,
       setFardos,
-      unidades,
-      setUnidades,
-      quickMode
+      pallets,
+      setPallets
     )
   }
 
   const calcAreaTotal = (
     item: StockItem,
-    palMap: Record<string, string>,
-    lasMap: Record<string, string>,
-    farMap: Record<string, string>
+    caixasMap: Record<string, string>,
+    sacosMap: Record<string, string>
   ) => {
-    const p = evaluateExpression(palMap[item.reduzido] || "0")
-    const l = evaluateExpression(lasMap[item.reduzido] || "0")
-    const f = evaluateExpression(farMap[item.reduzido] || "0")
-    return p * item.palletTotal + l * item.lastro + f
+    const cx = evaluateExpression(caixasMap[item.reduzido] || "0")
+    const sc = evaluateExpression(sacosMap[item.reduzido] || "0")
+    return cx + sc
   }
+
+  const calcItemCaixasTotal = (item: StockItem) =>
+    evaluateExpression(fardos[item.reduzido] || "0") +
+    evaluateExpression(pickingFardos[item.reduzido] || "0") +
+    evaluateExpression(avariaFardos[item.reduzido] || "0")
+
+  const calcItemSacosTotal = (item: StockItem) =>
+    evaluateExpression(pallets[item.reduzido] || "0") +
+    evaluateExpression(pickingPallets[item.reduzido] || "0") +
+    evaluateExpression(avariaPallets[item.reduzido] || "0")
 
   const calcItemGrandTotal = (item: StockItem) => {
     const gross =
-      calcAreaTotal(item, pallets, lastros, fardos) +
-      calcAreaTotal(item, pickingPallets, pickingLastros, pickingFardos) +
-      calcAreaTotal(item, avariaPallets, avariaLastros, avariaFardos)
+      calcAreaTotal(item, fardos, pallets) +
+      calcAreaTotal(item, pickingFardos, pickingPallets) +
+      calcAreaTotal(item, avariaFardos, avariaPallets)
     const tareBoxes = evaluateExpression(caixasTara[item.reduzido] || "0")
     const tareDiscount = tareBoxes * (Number(item.taraKg) || 0)
     return Math.max(0, Number((gross - tareDiscount).toFixed(2)))
@@ -1056,7 +941,7 @@ export default function GerenciadorEstoquePage() {
 
     const parsedItems: StockItem[] = []
     lines.forEach((line, idx) => {
-      // Aceita formato: "codigo;descricao;palete;lastro;unidade;tara" ou "codigo - descricao" ou apenas "descricao"
+      // Aceita formato: "codigo;descricao;unidade;tara" ou "codigo - descricao" ou apenas "descricao"
       const parts = line.includes(";")
         ? line.split(";").map((p) => p.trim())
         : line.includes("\t")
@@ -1066,22 +951,20 @@ export default function GerenciadorEstoquePage() {
       if (parts && parts.length >= 2) {
         const code = parts[0].replace(/\D+/g, "") || String(1000 + idx + 1)
         const descricao = parts[1]
-        const palletTotal = Number.parseInt(parts[2] || "0", 10) || 0
-        const lastro = Number.parseInt(parts[3] || "0", 10) || 0
         const tipoUnidade = (
           ["cx", "kg", "sc", "bdj", "dz", "un"].includes(
-            (parts[4] || "").toLowerCase()
+            (parts[2] || "").toLowerCase()
           )
-            ? (parts[4] || "").toLowerCase()
-            : "cx"
+            ? (parts[2] || "").toLowerCase()
+            : "kg"
         ) as TipoUnidade
-        const taraKg = Number.parseFloat((parts[5] || "0").replace(",", ".")) || 0
+        const taraKg = Number.parseFloat((parts[3] || "0").replace(",", ".")) || 0
         if (descricao) {
           parsedItems.push({
             reduzido: code,
             descricao,
-            palletTotal,
-            lastro,
+            palletTotal: 0,
+            lastro: 0,
             tipoUnidade,
             taraKg,
           })
@@ -1094,7 +977,7 @@ export default function GerenciadorEstoquePage() {
             descricao: match[2].trim(),
             palletTotal: 0,
             lastro: 0,
-            tipoUnidade: "cx",
+            tipoUnidade: "kg",
             taraKg: 0,
           })
         }
@@ -1102,7 +985,7 @@ export default function GerenciadorEstoquePage() {
     })
 
     if (!parsedItems.length) {
-      showToast("Use o formato: codigo;descricao;palete;lastro;unidade")
+      showToast("Use o formato: codigo;descricao;unidade;taraKg")
       return
     }
 
@@ -1138,34 +1021,16 @@ export default function GerenciadorEstoquePage() {
     const dateLabel = date || "Sem data"
     const contadorLabel = contador.trim() || "Sem contador"
     const scopeLabel = scope === "matriz" ? "Matriz" : "Filial"
-    const maxDescWidth = 82
-
-    const toInt = (val?: string) => Number.parseInt(val || "0", 10) || 0
-
-    const getAreaRowValues = (
-      item: StockItem,
-      palMap: Record<string, string>,
-      lasMap: Record<string, string>,
-      farMap: Record<string, string>,
-      uniMap: Record<string, string>
-    ) => ({
-      paleteValue: toInt(palMap[item.reduzido]),
-      lastroValue: toInt(lasMap[item.reduzido]),
-      fardoValue: toInt(farMap[item.reduzido]),
-      unidadeValue: item.unidade ? toInt(uniMap[item.reduzido]) : 0,
-      totalValue: calcAreaTotal(item, palMap, lasMap, farMap),
-    })
+    const maxDescWidth = 96
 
     const renderHeaderRow = (y: number) => {
       doc.setFont("helvetica", "bold")
       doc.setFontSize(9)
       doc.text("COD", 10, y)
       doc.text("PRODUTO", 28, y)
-      doc.text("UND", 112, y)
-      doc.text("PAL", 125, y)
-      doc.text("LAS", 140, y)
-      doc.text("AVU", 155, y)
-      doc.text("TOT LIQ", 172, y)
+      doc.text("CAIXAS", 132, y)
+      doc.text("SACOS", 154, y)
+      doc.text("TOTAL", 174, y)
       doc.setFont("helvetica", "normal")
       doc.setFontSize(9)
       return y + 5
@@ -1175,10 +1040,8 @@ export default function GerenciadorEstoquePage() {
       sectionTitle: string,
       itemsList: StockItem[],
       extractor: (item: StockItem) => {
-        paleteValue: number
-        lastroValue: number
-        fardoValue: number
-        unidadeValue: number
+        caixasValue: number
+        sacosValue: number
         totalValue: number
       },
       newPage: boolean
@@ -1197,8 +1060,7 @@ export default function GerenciadorEstoquePage() {
       y = renderHeaderRow(y)
 
       itemsList.forEach((item) => {
-        const { paleteValue, lastroValue, fardoValue, totalValue } =
-          extractor(item)
+        const { caixasValue, sacosValue, totalValue } = extractor(item)
         const mat = maturacao[item.reduzido]
         const matTag =
           mat && mat !== "firme" ? ` [${MATURACAO_LABELS[mat].badge}]` : ""
@@ -1213,11 +1075,9 @@ export default function GerenciadorEstoquePage() {
         }
         doc.text(item.reduzido, 10, y)
         doc.text(descLines, 28, y)
-        doc.text((item.tipoUnidade || "cx").toUpperCase(), 112, y)
-        doc.text(String(paleteValue), 125, y)
-        doc.text(String(lastroValue), 140, y)
-        doc.text(String(fardoValue), 155, y)
-        doc.text(String(totalValue), 172, y)
+        doc.text(String(caixasValue), 132, y)
+        doc.text(String(sacosValue), 154, y)
+        doc.text(String(totalValue), 174, y)
         y += rowHeight + 2
       })
     }
@@ -1225,60 +1085,33 @@ export default function GerenciadorEstoquePage() {
     renderSection(
       titleBase,
       orderedSelectedItems,
-      (item) => {
-        const pal =
-          toInt(pallets[item.reduzido]) +
-          toInt(pickingPallets[item.reduzido]) +
-          toInt(avariaPallets[item.reduzido])
-        const las =
-          toInt(lastros[item.reduzido]) +
-          toInt(pickingLastros[item.reduzido]) +
-          toInt(avariaLastros[item.reduzido])
-        const far =
-          toInt(fardos[item.reduzido]) +
-          toInt(pickingFardos[item.reduzido]) +
-          toInt(avariaFardos[item.reduzido])
-        const uni = item.unidade
-          ? toInt(unidades[item.reduzido]) +
-            toInt(pickingUnidades[item.reduzido]) +
-            toInt(avariaUnidades[item.reduzido])
-          : 0
-        return {
-          paleteValue: pal,
-          lastroValue: las,
-          fardoValue: far,
-          unidadeValue: uni,
-          totalValue: calcItemGrandTotal(item),
-        }
-      },
+      (item) => ({
+        caixasValue: calcItemCaixasTotal(item),
+        sacosValue: calcItemSacosTotal(item),
+        totalValue: calcItemGrandTotal(item),
+      }),
       false
     )
 
     renderSection(
       `${titleBase} - Picking`,
       orderedSelectedItems,
-      (item) =>
-        getAreaRowValues(
-          item,
-          pickingPallets,
-          pickingLastros,
-          pickingFardos,
-          pickingUnidades
-        ),
+      (item) => ({
+        caixasValue: evaluateExpression(pickingFardos[item.reduzido] || "0"),
+        sacosValue: evaluateExpression(pickingPallets[item.reduzido] || "0"),
+        totalValue: calcAreaTotal(item, pickingFardos, pickingPallets),
+      }),
       true
     )
 
     renderSection(
       `${titleBase} - Avarias`,
       orderedSelectedItems,
-      (item) =>
-        getAreaRowValues(
-          item,
-          avariaPallets,
-          avariaLastros,
-          avariaFardos,
-          avariaUnidades
-        ),
+      (item) => ({
+        caixasValue: evaluateExpression(avariaFardos[item.reduzido] || "0"),
+        sacosValue: evaluateExpression(avariaPallets[item.reduzido] || "0"),
+        totalValue: calcAreaTotal(item, avariaFardos, avariaPallets),
+      }),
       true
     )
 
@@ -1725,7 +1558,7 @@ export default function GerenciadorEstoquePage() {
               📦 Gerenciador de Estoque — Hortigranjeiros
             </div>
             <div className="stock-subtitle" style={{ textAlign: "left" }}>
-              Contagem por unidade (cx, kg, sc, bdj), desconto de tara e giro FEFO
+              Contagem direta em Caixas e Sacos (sem lastro ou avulsos)
             </div>
           </div>
           <Link
@@ -1789,15 +1622,6 @@ export default function GerenciadorEstoquePage() {
               <option value="matriz">Matriz</option>
             </select>
           </div>
-
-          <label className="stock-toggle">
-            <input
-              type="checkbox"
-              checked={quickMode}
-              onChange={(e) => setQuickMode(e.target.checked)}
-            />
-            Modo rapido (digitar total)
-          </label>
 
           <label className="stock-toggle">
             <input
@@ -1960,7 +1784,7 @@ export default function GerenciadorEstoquePage() {
                     value={bulkDbText}
                     onChange={(e) => setBulkDbText(e.target.value)}
                     placeholder={
-                      "Um produto por linha no formato:\ncodigo;descricao;palete;lastro;unidade;taraKg\nExemplo:\n1001;TOMATE ITALIANO;40;8;cx;1.8\n1002;BANANA PRATA;40;8;kg;2.0"
+                      "Um produto por linha no formato:\ncodigo;descricao;unidade;taraKg\nExemplo:\n1001;ABACATE 20 KG;cx;0\n1035;BATATA EXTRA;sc;0"
                     }
                   />
                   <div className="stock-bulk-actions">
@@ -2046,7 +1870,7 @@ export default function GerenciadorEstoquePage() {
                       type="text"
                       value={customDesc}
                       onChange={(e) => setCustomDesc(e.target.value)}
-                      placeholder="Nome do Produto"
+                      placeholder="Nome do Produto (ex: ABACATE 20 KG)"
                     />
                     <select
                       value={customTipoUnidade}
@@ -2060,9 +1884,9 @@ export default function GerenciadorEstoquePage() {
                         fontSize: "12px",
                       }}
                     >
-                      <option value="cx">Unidade: Caixa (cx)</option>
+                      <option value="cx">Embalagem: Caixa (cx)</option>
+                      <option value="sc">Embalagem: Saco (sc)</option>
                       <option value="kg">Unidade: Quilo (kg)</option>
-                      <option value="sc">Unidade: Saco (sc)</option>
                       <option value="bdj">Unidade: Bandeja (bdj)</option>
                       <option value="dz">Unidade: Dúzia (dz)</option>
                       <option value="un">Unidade: Unidade (un)</option>
@@ -2073,30 +1897,6 @@ export default function GerenciadorEstoquePage() {
                       value={customTaraKg}
                       onChange={(e) => setCustomTaraKg(e.target.value)}
                       placeholder="Tara por caixa (kg) opcional"
-                    />
-                    <input
-                      type="text"
-                      inputMode="tel"
-                      value={customPalletTotal}
-                      onChange={(e) =>
-                        setCustomPalletTotal(sanitizeExpression(e.target.value))
-                      }
-                      onBlur={(e) =>
-                        setCustomPalletTotal(normalizeNumericString(e.target.value))
-                      }
-                      placeholder="Total por palete"
-                    />
-                    <input
-                      type="text"
-                      inputMode="tel"
-                      value={customLastro}
-                      onChange={(e) =>
-                        setCustomLastro(sanitizeExpression(e.target.value))
-                      }
-                      onBlur={(e) =>
-                        setCustomLastro(normalizeNumericString(e.target.value))
-                      }
-                      placeholder="Qtd por Lastro"
                     />
                   </div>
                   {customFormError && (
@@ -2344,7 +2144,9 @@ export default function GerenciadorEstoquePage() {
                     <div className="compact-details">
                       {renderCurrentTabFields(item)}
                       <div className="stock-total">
-                        Total Líquido: {Number.isFinite(total) ? total : 0} {unitTag}
+                        📦 Caixas: {calcItemCaixasTotal(item)} | 🛍️ Sacos:{" "}
+                        {calcItemSacosTotal(item)} — Quantidade Total:{" "}
+                        {Number.isFinite(total) ? total : 0}
                       </div>
                     </div>
                   )}
@@ -2410,7 +2212,9 @@ export default function GerenciadorEstoquePage() {
                   </div>
                   <div className="stock-fields">{renderCurrentTabFields(item)}</div>
                   <div className="stock-total">
-                    Total Líquido: {Number.isFinite(total) ? total : 0} {unitTag}
+                    📦 Caixas: {calcItemCaixasTotal(item)} | 🛍️ Sacos:{" "}
+                    {calcItemSacosTotal(item)} — Quantidade Total:{" "}
+                    {Number.isFinite(total) ? total : 0}
                   </div>
                 </div>
               )
