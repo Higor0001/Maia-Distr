@@ -96,29 +96,16 @@ export default function Home() {
     localStorage.removeItem("bicadaData")
     localStorage.removeItem("occurrences")
 
-    if (localStorage.getItem("triagem-auth") === "true") {
-      setIsAuthenticated(true)
-    }
-    const savedScope = localStorage.getItem("triagem-scope")
-    if (savedScope === "filial" || savedScope === "matriz") {
-      setLoginScope(savedScope)
-    }
-    const savedTriagemUser = localStorage.getItem("triagem-user")
-    if (savedTriagemUser) {
-      try {
-        const parsedUser = JSON.parse(savedTriagemUser)
-        setLoggedUser(parsedUser)
-        if (parsedUser?.nome || parsedUser?.usuario) {
-          setOperatorName(parsedUser.nome || parsedUser.usuario)
-        }
-      } catch {
-        setLoggedUser(null)
-      }
-    }
-
-    const envBot = typeof window !== "undefined" ? process.env.NEXT_PUBLIC_TELEGRAM_BOT : undefined
-    const envChat = typeof window !== "undefined" ? process.env.NEXT_PUBLIC_TELEGRAM_CHAT : undefined
-    const envOperator = typeof window !== "undefined" ? process.env.NEXT_PUBLIC_OPERATOR_NAME : undefined
+    fetch("/api/session")
+      .then((res) => res.json())
+      .then((data) => {
+        if (!data?.ok || !data.user) return
+        setLoggedUser(data.user)
+        setOperatorName(data.user.nome || data.user.usuario)
+        setLoginScope(data.user.unidade === "matriz" ? "matriz" : "filial")
+        setIsAuthenticated(true)
+      })
+      .catch(() => undefined)
 
     const savedBot = localStorage.getItem(STORAGE_KEYS.bot)
     const savedChat = localStorage.getItem(STORAGE_KEYS.chat)
@@ -126,14 +113,9 @@ export default function Home() {
     const savedAutoSend = localStorage.getItem(STORAGE_KEYS.autoSend)
     const savedOccurrences = localStorage.getItem(STORAGE_KEYS.occurrences)
 
-    if (envBot) setBotToken(envBot)
-    else if (savedBot) setBotToken(savedBot)
-
-    if (envChat) setChatId(envChat)
-    else if (savedChat) setChatId(savedChat)
-
-    if (envOperator) setOperatorName(envOperator)
-    else if (savedOperator) setOperatorName(savedOperator)
+    if (savedBot) setBotToken(savedBot)
+    if (savedChat) setChatId(savedChat)
+    if (savedOperator) setOperatorName(savedOperator)
 
     if (savedAutoSend) setAutoSend(JSON.parse(savedAutoSend))
     if (savedOccurrences) {
@@ -229,9 +211,25 @@ export default function Home() {
     })
   }
 
+  const sanitizeMathInput = (raw: string) =>
+    raw
+      .replace(/[xX×]/g, "*")
+      .replace(/[÷:]/g, "/")
+      .replace(/,/g, ".")
+      .replace(/[^\d.+\-*/()]/g, "")
+      .replace(/([+\-*/.]){2,}/g, "$1")
+
   const parseKgInput = (raw: string) => {
-    const normalized = raw.replace(",", ".").trim()
-    return Number.parseFloat(normalized)
+    const cleaned = sanitizeMathInput(raw || "").replace(/[+\-*/.(]+$/g, "")
+    if (!cleaned) return Number.NaN
+    try {
+      if (!/^[\d.+\-*/()]+$/.test(cleaned)) return Number.NaN
+      // eslint-disable-next-line no-new-func
+      const res = Number(Function(`"use strict"; return (${cleaned});`)())
+      return Number.isFinite(res) ? Number(res.toFixed(3)) : Number.NaN
+    } catch {
+      return Number.parseFloat(cleaned)
+    }
   }
 
   const addItem = () => {
@@ -581,16 +579,14 @@ export default function Home() {
         setLoginError(data?.error || "Usuario ou senha invalidos.")
         return
       }
-      localStorage.setItem("triagem-auth", "true")
-      localStorage.setItem("triagem-scope", loginScope)
       if (data?.user?.usuario) {
-        localStorage.setItem("triagem-user", JSON.stringify(data.user))
         setLoggedUser(data.user)
         const opName = data.user.nome || data.user.usuario
         setOperatorName(opName)
         localStorage.setItem(STORAGE_KEYS.operator, opName)
       }
       setIsAuthenticated(true)
+      window.location.reload()
     } catch (err) {
       console.error("Login request error:", err)
       setLoginError("Nao foi possivel autenticar. Tente novamente.")
@@ -599,9 +595,8 @@ export default function Home() {
     }
   }
 
-  const handleLogout = () => {
-    localStorage.removeItem("triagem-auth")
-    localStorage.removeItem("triagem-user")
+  const handleLogout = async () => {
+    await fetch("/api/logout", { method: "POST" }).catch(() => undefined)
     setLoggedUser(null)
     setIsAuthenticated(false)
     setLoginForm({ usuario: "", senha: "" })
@@ -846,26 +841,19 @@ export default function Home() {
           </form>
 
           <div style={{ display: "flex", flexDirection: "column", gap: "6px", marginTop: "6px" }}>
-            <button
-              type="button"
-              onClick={() => {
-                setFirstAccessOpen(true)
-                setFirstAccessStep("lookup")
-                setFirstAccessError("")
-                setFirstAccessSuccess("")
-                setFirstAccessForm({ usuario: "", nome: "", email: "", senha: "", confirmSenha: "" })
-              }}
+            <p
               style={{
+                margin: 0,
+                textAlign: "center",
                 border: "none",
                 background: "transparent",
                 color: "#1a2a6c",
                 fontWeight: "bold",
                 fontSize: "12px",
-                cursor: "pointer",
               }}
             >
-              Primeiro acesso / Cadastrar senha
-            </button>
+              Solicite seu cadastro a um administrador.
+            </p>
             <a
               href="/gerenciador-estoque"
               style={{

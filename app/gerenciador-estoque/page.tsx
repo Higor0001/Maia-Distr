@@ -33,26 +33,48 @@ const MATURACAO_LABELS: Record<MaturacaoStatus, { label: string; badge: string }
   critico: { label: "🔴 Giro Imediato", badge: "GIRO IMEDIATO" },
 }
 
-// Utilitários de expressão numérica (ex: "10+5")
+// Utilitários de expressão matemática (+, -, *, /) ex: "10+5", "4*12", "50-3", "20/2"
 const sanitizeExpression = (val: string) =>
-  val.replace(/[^\d+]/g, "").replace(/\++/g, "+")
+  val
+    .replace(/[xX×]/g, "*")
+    .replace(/[÷:]/g, "/")
+    .replace(/,/g, ".")
+    .replace(/[^\d.+\-*/()]/g, "")
+    .replace(/([+\-*/.]){2,}/g, "$1")
 
 const evaluateExpression = (val: string): number => {
   const cleaned = sanitizeExpression(val)
   if (!cleaned) return 0
-  const parts = cleaned.split("+").filter(Boolean)
-  if (!parts.length) return 0
-  return parts.reduce((acc, part) => acc + (Number.parseInt(part, 10) || 0), 0)
+  // Remove operadores pendentes no final enquanto o usuário digita (ex: "10*5+")
+  const trimmed = cleaned.replace(/[+\-*/.(]+$/g, "")
+  if (!trimmed) return 0
+
+  try {
+    // Validação estrita: apenas números, ponto decimal, parênteses e operadores + - * /
+    if (!/^[\d.+\-*/()]+$/.test(trimmed)) return 0
+    // eslint-disable-next-line no-new-func
+    const rawResult = Function(`"use strict"; return (${trimmed});`)()
+    const num = Number(rawResult)
+    if (!Number.isFinite(num)) return 0
+    return Math.max(0, Number(num.toFixed(2)))
+  } catch {
+    const fallback = Number.parseFloat(trimmed)
+    return Number.isFinite(fallback) ? Math.max(0, Number(fallback.toFixed(2))) : 0
+  }
 }
 
+const hasMathOperator = (val: string | undefined): boolean =>
+  Boolean(val && /[+\-*/]/.test(val.replace(/^-/, "")))
+
 const normalizeNumericString = (val: string): string => {
+  if (!val || !val.trim()) return ""
   const num = evaluateExpression(val)
-  return num ? String(num) : ""
+  return num ? String(num) : "0"
 }
 
 const stepValue = (current: string | undefined, delta: number): string => {
   const val = evaluateExpression(current || "0")
-  return Number.isFinite(val) ? String(Math.max(0, val + delta)) : ""
+  return Number.isFinite(val) ? String(Math.max(0, Number((val + delta).toFixed(2)))) : ""
 }
 
 // Gerador nativo de PDF A4 compatível com a interface usada pelo Gerenciador de Estoque
@@ -182,7 +204,8 @@ class SimpleA4Pdf {
 
   output(_type: "blob"): Blob {
     const bytes = this.buildPdfBytes()
-    return new Blob([bytes], { type: "application/pdf" })
+    const buffer = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer
+    return new Blob([buffer], { type: "application/pdf" })
   }
 
   save(fileName: string) {
@@ -514,7 +537,14 @@ export default function GerenciadorEstoquePage() {
           }}
         >
           <div className="field">
-            <span>📦 Caixas (CX)</span>
+            <span>
+              📦 Caixas (CX){" "}
+              {hasMathOperator(caixasMap[item.reduzido]) && (
+                <strong style={{ color: "#15803d" }}>
+                  = {evaluateExpression(caixasMap[item.reduzido] || "0")}
+                </strong>
+              )}
+            </span>
             <div className="stepper">
               <button
                 type="button"
@@ -529,13 +559,20 @@ export default function GerenciadorEstoquePage() {
               </button>
               <input
                 type="text"
-                inputMode="tel"
-                pattern="[0-9+]*"
-                placeholder="0"
+                placeholder="Ex: 10+5, 4*12, 50-3"
                 value={caixasMap[item.reduzido] || ""}
                 onChange={(e) => {
                   const val = sanitizeExpression(e.target.value)
                   setCaixasMap((prev) => ({ ...prev, [item.reduzido]: val }))
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault()
+                    setCaixasMap((prev) => ({
+                      ...prev,
+                      [item.reduzido]: normalizeNumericString(prev[item.reduzido] || ""),
+                    }))
+                  }
                 }}
                 onBlur={(e) =>
                   setCaixasMap((prev) => ({
@@ -556,10 +593,66 @@ export default function GerenciadorEstoquePage() {
                 +
               </button>
             </div>
+            <div style={{ display: "flex", gap: "4px", marginTop: "4px" }}>
+              {(["+", "-", "*", "/"] as const).map((op) => (
+                <button
+                  key={op}
+                  type="button"
+                  onClick={() =>
+                    setCaixasMap((prev) => ({
+                      ...prev,
+                      [item.reduzido]: sanitizeExpression((prev[item.reduzido] || "") + op),
+                    }))
+                  }
+                  style={{
+                    flex: 1,
+                    padding: "4px 0",
+                    fontSize: "12px",
+                    fontWeight: 700,
+                    background: "#eef1f8",
+                    color: "#1a2a6c",
+                    border: "1px solid #cbd5e1",
+                    borderRadius: "6px",
+                    marginTop: 0,
+                  }}
+                >
+                  {op === "*" ? "×" : op === "/" ? "÷" : op}
+                </button>
+              ))}
+              <button
+                type="button"
+                onClick={() =>
+                  setCaixasMap((prev) => ({
+                    ...prev,
+                    [item.reduzido]: normalizeNumericString(prev[item.reduzido] || ""),
+                  }))
+                }
+                style={{
+                  flex: 1,
+                  padding: "4px 0",
+                  fontSize: "12px",
+                  fontWeight: 700,
+                  background: "#1a2a6c",
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: "6px",
+                  marginTop: 0,
+                }}
+              >
+                =
+              </button>
+            </div>
           </div>
 
           <div className="field">
-            <span>🛍️ Sacos (SC)</span>
+            <span>
+              🛍️ Sacos (SC){" "}
+              {hasMathOperator(sacosMap[item.reduzido]) && (
+                <strong style={{ color: "#15803d" }}>
+                  = {evaluateExpression(sacosMap[item.reduzido] || "0")}
+                </strong>
+              )}
+            </span>
             <div className="stepper">
               <button
                 type="button"
@@ -574,13 +667,20 @@ export default function GerenciadorEstoquePage() {
               </button>
               <input
                 type="text"
-                inputMode="tel"
-                pattern="[0-9+]*"
-                placeholder="0"
+                placeholder="Ex: 10+5, 4*12, 50-3"
                 value={sacosMap[item.reduzido] || ""}
                 onChange={(e) => {
                   const val = sanitizeExpression(e.target.value)
                   setSacosMap((prev) => ({ ...prev, [item.reduzido]: val }))
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault()
+                    setSacosMap((prev) => ({
+                      ...prev,
+                      [item.reduzido]: normalizeNumericString(prev[item.reduzido] || ""),
+                    }))
+                  }
                 }}
                 onBlur={(e) =>
                   setSacosMap((prev) => ({
@@ -599,6 +699,55 @@ export default function GerenciadorEstoquePage() {
                 }
               >
                 +
+              </button>
+            </div>
+            <div style={{ display: "flex", gap: "4px", marginTop: "4px" }}>
+              {(["+", "-", "*", "/"] as const).map((op) => (
+                <button
+                  key={op}
+                  type="button"
+                  onClick={() =>
+                    setSacosMap((prev) => ({
+                      ...prev,
+                      [item.reduzido]: sanitizeExpression((prev[item.reduzido] || "") + op),
+                    }))
+                  }
+                  style={{
+                    flex: 1,
+                    padding: "4px 0",
+                    fontSize: "12px",
+                    fontWeight: 700,
+                    background: "#eef1f8",
+                    color: "#1a2a6c",
+                    border: "1px solid #cbd5e1",
+                    borderRadius: "6px",
+                    marginTop: 0,
+                  }}
+                >
+                  {op === "*" ? "×" : op === "/" ? "÷" : op}
+                </button>
+              ))}
+              <button
+                type="button"
+                onClick={() =>
+                  setSacosMap((prev) => ({
+                    ...prev,
+                    [item.reduzido]: normalizeNumericString(prev[item.reduzido] || ""),
+                  }))
+                }
+                style={{
+                  flex: 1,
+                  padding: "4px 0",
+                  fontSize: "12px",
+                  fontWeight: 700,
+                  background: "#1a2a6c",
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: "6px",
+                  marginTop: 0,
+                }}
+              >
+                =
               </button>
             </div>
           </div>
@@ -620,8 +769,6 @@ export default function GerenciadorEstoquePage() {
                 </button>
                 <input
                   type="text"
-                  inputMode="tel"
-                  pattern="[0-9+]*"
                   value={caixasTara[item.reduzido] || ""}
                   onChange={(e) =>
                     setCaixasTara((prev) => ({
@@ -2101,8 +2248,7 @@ export default function GerenciadorEstoquePage() {
                           </button>
                           <input
                             type="text"
-                            inputMode="tel"
-                            pattern="[0-9+]*"
+                            placeholder="Ex: 10+5, 4*12"
                             value={getCompactDirectValue(item.reduzido)}
                             onChange={(e) => {
                               const code = item.reduzido
@@ -2110,27 +2256,14 @@ export default function GerenciadorEstoquePage() {
                                 code,
                                 sanitizeExpression(e.target.value)
                               )
-                              if (activeTab === "picking") {
-                                if (pickingPallets[code])
-                                  setPickingPallets((p) => ({ ...p, [code]: "" }))
-                                if (pickingLastros[code])
-                                  setPickingLastros((p) => ({ ...p, [code]: "" }))
-                                if (pickingUnidades[code])
-                                  setPickingUnidades((p) => ({ ...p, [code]: "" }))
-                              } else if (activeTab === "avarias") {
-                                if (avariaPallets[code])
-                                  setAvariaPallets((p) => ({ ...p, [code]: "" }))
-                                if (avariaLastros[code])
-                                  setAvariaLastros((p) => ({ ...p, [code]: "" }))
-                                if (avariaUnidades[code])
-                                  setAvariaUnidades((p) => ({ ...p, [code]: "" }))
-                              } else {
-                                if (pallets[code])
-                                  setPallets((p) => ({ ...p, [code]: "" }))
-                                if (lastros[code])
-                                  setLastros((p) => ({ ...p, [code]: "" }))
-                                if (unidades[code])
-                                  setUnidades((p) => ({ ...p, [code]: "" }))
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault()
+                                setCompactDirectValue(
+                                  item.reduzido,
+                                  normalizeNumericString(getCompactDirectValue(item.reduzido))
+                                )
                               }
                             }}
                             onBlur={(e) =>

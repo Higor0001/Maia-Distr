@@ -1,87 +1,35 @@
 import { NextResponse } from "next/server"
-import { loadUsersFromDbFile, saveUsersToDbFile, type TriagemUser } from "../login/route"
+import { hashPassword, requireSession } from "@/lib/auth"
 import { supabaseFetch } from "@/lib/db"
 
 export async function POST(request: Request) {
+  const auth = requireSession(request)
+  if ("response" in auth) return auth.response
+  if (auth.session.role !== "admin") {
+    return NextResponse.json({ ok: false, error: "Apenas administradores podem cadastrar usuários." }, { status: 403 })
+  }
+
   try {
     const body = await request.json()
-    const usuario = String(body?.usuario || "").trim()
-    const email = body?.email ? String(body.email).trim() : ""
-    const senha = body?.senha ? String(body.senha).trim() : ""
-    const nome = body?.nome ? String(body.nome).trim() : ""
+    const usuario = String(body?.usuario || "").trim().toLowerCase()
+    const nome = String(body?.nome || "").trim()
+    const email = String(body?.email || "").trim().toLowerCase()
+    const senha = String(body?.senha || "")
+    const unidade = body?.unidade === "matriz" ? "matriz" : "filial"
 
-    if (!usuario) {
-      return NextResponse.json(
-        { ok: false, error: "Informe a matricula ou usuario para continuar." },
-        { status: 400 }
-      )
+    if (!/^[a-z0-9._-]{3,60}$/.test(usuario) || nome.length < 2 || !email.includes("@") || senha.length < 10) {
+      return NextResponse.json({ ok: false, error: "Informe usuário válido, nome, e-mail e uma senha de pelo menos 10 caracteres." }, { status: 400 })
     }
 
-    const users = loadUsersFromDbFile()
-    const existing = users.find(
-      (u) => u.usuario.toLowerCase() === usuario.toLowerCase()
-    )
-
-    // Etapa 1: Apenas consulta da matrícula/usuário
-    if (!email && !senha) {
-      return NextResponse.json({
-        ok: true,
-        user: {
-          usuario,
-          nome: existing?.nome || usuario.toUpperCase(),
-        },
-      })
-    }
-
-    // Etapa 2: Concluir cadastro de primeiro acesso
-    if (!email || !senha) {
-      return NextResponse.json(
-        { ok: false, error: "Email e senha sao obrigatorios." },
-        { status: 400 }
-      )
-    }
-
-    const newUser: TriagemUser = {
-      usuario,
-      nome: nome || existing?.nome || usuario.toUpperCase(),
-      email,
-      senha,
-      unidade: existing?.unidade || "filial",
-      canRegister: true,
-    }
-
-    await supabaseFetch("triagem_usuarios?on_conflict=usuario", {
+    const response = await supabaseFetch("triagem_usuarios?on_conflict=usuario", {
       method: "POST",
       headers: { Prefer: "resolution=merge-duplicates,return=representation" },
-      body: JSON.stringify([
-        {
-          usuario: newUser.usuario,
-          nome: newUser.nome,
-          email: newUser.email,
-          senha: newUser.senha,
-          unidade: newUser.unidade,
-          can_register: true,
-          updated_at: new Date().toISOString(),
-        },
-      ]),
+      body: JSON.stringify([{ usuario, nome, email, unidade, senha_hash: await hashPassword(senha), senha: null, role: "operator", can_register: false }]),
     })
-
-    const idx = users.findIndex(
-      (u) => u.usuario.toLowerCase() === usuario.toLowerCase()
-    )
-    if (idx >= 0) {
-      users[idx] = newUser
-    } else {
-      users.push(newUser)
-    }
-    saveUsersToDbFile(users)
-
-    return NextResponse.json({ ok: true, user: newUser })
+    if (!response?.ok) return NextResponse.json({ ok: false, error: "Não foi possível salvar o usuário." }, { status: 502 })
+    return NextResponse.json({ ok: true })
   } catch (error) {
     console.error("POST /api/first-access error:", error)
-    return NextResponse.json(
-      { ok: false, error: "Erro ao concluir cadastro." },
-      { status: 500 }
-    )
+    return NextResponse.json({ ok: false, error: "Erro ao cadastrar usuário." }, { status: 500 })
   }
 }
