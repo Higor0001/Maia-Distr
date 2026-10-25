@@ -3,19 +3,26 @@
 @tailwind utilities;
 
 body {
-  background-image: url("https://hebbkx1anhila5yf.public.blob.vercel-storage.com/images-JqtI3BJcNfpYpDh4QkuniylOURB50J.jpeg");
+  background-image: linear-gradient(rgba(10, 18, 12, 0.35), rgba(10, 18, 12, 0.48)), url("/images/login-bg.jpg");
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
   background-attachment: fixed;
   font-family: "Segoe UI", sans-serif;
   color: #333;
+  padding: 0;
+  min-height: 100vh;
+  margin: 0;
+}
+
+.marca-foto-container {
+  min-height: 100vh;
+  width: 100%;
   padding: 20px;
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 100vh;
-  margin: 0;
+  box-sizing: border-box;
 }
 
 .container {
