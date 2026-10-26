@@ -866,6 +866,18 @@ export default function Home() {
             >
               Gerenciador de estoque
             </a>
+            <a
+              href="/termos"
+              style={{
+                textAlign: "center",
+                fontSize: "11px",
+                color: "#64748b",
+                textDecoration: "underline",
+                marginTop: "2px",
+              }}
+            >
+              Termos de Uso e Privacidade
+            </a>
           </div>
         </div>
 
@@ -1040,6 +1052,21 @@ export default function Home() {
                   ⚙️ Painel Admin
                 </a>
               )}
+              <a
+                href="/termos"
+                style={{
+                  color: "#1a2a6c",
+                  border: "1px solid #cbd5e1",
+                  background: "#ffffff",
+                  fontWeight: 700,
+                  fontSize: "12px",
+                  padding: "5px 10px",
+                  borderRadius: "6px",
+                  textDecoration: "none",
+                }}
+              >
+                📄 Termos
+              </a>
               <button
                 type="button"
                 onClick={handleLogout}

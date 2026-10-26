@@ -1383,6 +1383,21 @@ export default function GerenciadorEstoquePage() {
     }
   }
 
+  // Carregar sessão do usuário se houver (para preencher contador automaticamente)
+  useEffect(() => {
+    fetch("/api/session")
+      .then((r) => r.json())
+      .then((d) => {
+        if (d?.authenticated && d?.user) {
+          const nome = d.user.nome || d.user.usuario
+          if (nome) {
+            setContador((prev) => (prev ? prev : nome))
+          }
+        }
+      })
+      .catch(() => undefined)
+  }, [])
+
   // Carregar catálogo de itens exclusivamente do banco de dados
   useEffect(() => {
     let active = true
@@ -1781,6 +1796,22 @@ export default function GerenciadorEstoquePage() {
               }}
             >
               ⚙️ Painel Admin
+            </Link>
+            <Link
+              href="/termos"
+              style={{
+                background: "rgba(255, 255, 255, 0.95)",
+                color: "#475569",
+                border: "1px solid #cbd5e1",
+                padding: "9px 12px",
+                borderRadius: "10px",
+                fontSize: "12px",
+                fontWeight: 700,
+                textDecoration: "none",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+              }}
+            >
+              📄 Termos
             </Link>
             <Link
               href="/"

@@ -55,15 +55,15 @@ header h1 i {
   border-radius: 50%;
 }
 
-label {
+.marca-foto-container label {
   font-weight: bold;
   display: block;
   margin-top: 10px;
 }
 
-input,
-button,
-select {
+.marca-foto-container input,
+.marca-foto-container button,
+.marca-foto-container select {
   width: 100%;
   padding: 10px;
   border-radius: 8px;
@@ -72,13 +72,13 @@ select {
   box-sizing: border-box;
 }
 
-input:focus,
-select:focus {
+.marca-foto-container input:focus,
+.marca-foto-container select:focus {
   border-color: #1a2a6c;
   outline: none;
 }
 
-button {
+.marca-foto-container button {
   background: linear-gradient(to right, #1a2a6c, #b21f1f);
   color: white;
   cursor: pointer;
@@ -86,7 +86,7 @@ button {
   margin-top: 10px;
 }
 
-button:hover {
+.marca-foto-container button:hover {
   transform: translateY(-2px);
 }
 

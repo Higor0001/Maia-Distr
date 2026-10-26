@@ -31,7 +31,7 @@ export async function GET(request: Request) {
     try {
       const [resUsers, resItems, resCounts, resPerdas] = await Promise.all([
         supabaseFetch("triagem_usuarios?select=usuario", { method: "HEAD", headers: { Prefer: "count=exact" } }),
-        supabaseFetch("estoque_itens?select=reduzido&ativo=eq.true", { method: "HEAD", headers: { Prefer: "count=exact" } }),
+        supabaseFetch("estoque_itens?select=reduzido", { method: "HEAD", headers: { Prefer: "count=exact" } }),
         supabaseFetch("estoque_contagens?select=id", { method: "HEAD", headers: { Prefer: "count=exact" } }),
         supabaseFetch("perdas_ocorrencias?select=id", { method: "HEAD", headers: { Prefer: "count=exact" } }),
       ])
