@@ -1353,6 +1353,36 @@ export default function GerenciadorEstoquePage() {
     }
   }
 
+  const handleSendEmailPdf = async () => {
+    setTelegramMessage("")
+    try {
+      const { doc, fileName } = generatePdf()
+      const blob = doc.output("blob")
+      const formData = new FormData()
+      formData.append("file", blob, fileName)
+      formData.append("type", "estoque")
+      formData.append("unit", scope)
+
+      setTelegramStatus("info")
+      setTelegramMessage("Enviando relatório por e-mail via SMTP...")
+
+      const res = await fetch("/api/email/send-report", {
+        method: "POST",
+        body: formData,
+      })
+      const data = await res.json()
+      if (!res.ok || !data?.ok) {
+        throw new Error(data?.error || "Falha ao enviar por e-mail.")
+      }
+      setTelegramStatus("success")
+      setTelegramMessage(data?.message || "PDF de estoque enviado com sucesso por e-mail!")
+    } catch (err: any) {
+      console.error("Email send error:", err)
+      setTelegramStatus("error")
+      setTelegramMessage(err?.message || "Não foi possível enviar por e-mail.")
+    }
+  }
+
   // Carregar catálogo de itens exclusivamente do banco de dados
   useEffect(() => {
     let active = true
@@ -1735,21 +1765,39 @@ export default function GerenciadorEstoquePage() {
               </div>
             </div>
           </div>
-          <Link
-            href="/"
-            style={{
-              background: "rgba(255, 255, 255, 0.95)",
-              color: "#1a2a6c",
-              padding: "9px 14px",
-              borderRadius: "10px",
-              fontSize: "12px",
-              fontWeight: 700,
-              textDecoration: "none",
-              boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
-            }}
-          >
-            🥬 Ir para Controle de Perdas
-          </Link>
+          <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
+            <Link
+              href="/admin"
+              style={{
+                background: "rgba(15, 23, 42, 0.95)",
+                color: "#818cf8",
+                border: "1px solid rgba(129, 140, 248, 0.4)",
+                padding: "9px 14px",
+                borderRadius: "10px",
+                fontSize: "12px",
+                fontWeight: 700,
+                textDecoration: "none",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
+              }}
+            >
+              ⚙️ Painel Admin
+            </Link>
+            <Link
+              href="/"
+              style={{
+                background: "rgba(255, 255, 255, 0.95)",
+                color: "#1a2a6c",
+                padding: "9px 14px",
+                borderRadius: "10px",
+                fontSize: "12px",
+                fontWeight: 700,
+                textDecoration: "none",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
+              }}
+            >
+              🥬 Ir para Controle de Perdas
+            </Link>
+          </div>
         </div>
 
         <div className="stock-form">
@@ -2497,6 +2545,13 @@ export default function GerenciadorEstoquePage() {
             className="stock-secondary"
           >
             Enviar PDF Telegram
+          </button>
+          <button
+            type="button"
+            onClick={handleSendEmailPdf}
+            className="stock-secondary"
+          >
+            ✉️ Enviar PDF E-mail (SMTP)
           </button>
         </div>
 

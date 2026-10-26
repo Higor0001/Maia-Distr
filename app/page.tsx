@@ -71,7 +71,7 @@ export default function Home() {
   const [loginForm, setLoginForm] = useState({ usuario: "", senha: "" })
   const [loginError, setLoginError] = useState("")
   const [isLoggingIn, setIsLoggingIn] = useState(false)
-  const [loggedUser, setLoggedUser] = useState<{ usuario: string; nome?: string; unidade?: string } | null>(null)
+  const [loggedUser, setLoggedUser] = useState<{ usuario: string; nome?: string; unidade?: string; role?: "admin" | "operator" } | null>(null)
 
   const [firstAccessOpen, setFirstAccessOpen] = useState(false)
   const [firstAccessStep, setFirstAccessStep] = useState<"lookup" | "register" | "done">("lookup")
@@ -1022,6 +1022,23 @@ export default function Home() {
                 <span style={{ fontSize: "13px", color: "#1a2a6c", fontWeight: 700 }}>
                   👤 {loggedUser.nome || loggedUser.usuario} ({loginScope.toUpperCase()})
                 </span>
+              )}
+              {loggedUser?.role === "admin" && (
+                <a
+                  href="/admin"
+                  style={{
+                    color: "#ffffff",
+                    background: "#1a2a6c",
+                    fontWeight: 700,
+                    fontSize: "12px",
+                    padding: "5px 12px",
+                    borderRadius: "6px",
+                    textDecoration: "none",
+                    boxShadow: "0 2px 6px rgba(26,42,108,0.2)",
+                  }}
+                >
+                  ⚙️ Painel Admin
+                </a>
               )}
               <button
                 type="button"
