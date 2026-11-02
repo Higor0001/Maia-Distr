@@ -222,6 +222,21 @@ class SimpleA4Pdf {
 }
 
 export default function GerenciadorEstoquePage() {
+  const [moduloEstoqueAtivo, setModuloEstoqueAtivo] = useState(false)
+  const [loadingModuloConfig, setLoadingModuloConfig] = useState(true)
+
+  useEffect(() => {
+    fetch("/api/admin/settings")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.settings?.modulos?.moduloEstoqueAtivo) {
+          setModuloEstoqueAtivo(true)
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoadingModuloConfig(false))
+  }, [])
+
   const [scope, setScope] = useState<"filial" | "matriz">("filial")
   const [date, setDate] = useState("")
   const [contador, setContador] = useState("")
@@ -1731,6 +1746,107 @@ export default function GerenciadorEstoquePage() {
     } finally {
       setIsSaving(false)
     }
+  }
+
+  if (!loadingModuloConfig && !moduloEstoqueAtivo) {
+    return (
+      <div
+        style={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "20px",
+          background: "#f1f5f9",
+          fontFamily: "system-ui, sans-serif",
+        }}
+      >
+        <div
+          style={{
+            maxWidth: "460px",
+            width: "100%",
+            background: "#ffffff",
+            borderRadius: "20px",
+            padding: "32px",
+            boxShadow: "0 10px 25px rgba(0,0,0,0.08)",
+            border: "1px solid #e2e8f0",
+            textAlign: "center",
+          }}
+        >
+          <div
+            style={{
+              width: "60px",
+              height: "60px",
+              borderRadius: "16px",
+              background: "#fef3c7",
+              color: "#b45309",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: "28px",
+              margin: "0 auto 16px auto",
+            }}
+          >
+            🔒
+          </div>
+          <h1
+            style={{
+              fontSize: "18px",
+              fontWeight: 800,
+              color: "#0f172a",
+              marginBottom: "8px",
+            }}
+          >
+            Módulo de Estoque Desativado
+          </h1>
+          <p
+            style={{
+              fontSize: "13px",
+              color: "#64748b",
+              lineHeight: 1.6,
+              marginBottom: "24px",
+            }}
+          >
+            O gerenciamento de estoque está desativado durante a primeira etapa
+            operacional da Maia Distribuidora. Todos os registros anteriores e o
+            catálogo mestre de produtos continuam protegidos e preservados.
+          </p>
+          <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+            <Link
+              href="/simples-conferencia"
+              style={{
+                display: "block",
+                padding: "12px",
+                background: "#1a2a6c",
+                color: "#ffffff",
+                fontWeight: 700,
+                fontSize: "13px",
+                borderRadius: "12px",
+                textDecoration: "none",
+              }}
+            >
+              Acessar Simples Conferência & Pesagem
+            </Link>
+            <Link
+              href="/perdas"
+              style={{
+                display: "block",
+                padding: "12px",
+                background: "#f8fafc",
+                color: "#334155",
+                fontWeight: 600,
+                fontSize: "13px",
+                borderRadius: "12px",
+                border: "1px solid #cbd5e1",
+                textDecoration: "none",
+              }}
+            >
+              Acessar Módulo de Perdas
+            </Link>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (

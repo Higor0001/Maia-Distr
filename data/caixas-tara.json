@@ -1,0 +1,4 @@
+[
+  { "id": "caixa-1", "nome": "Caixa 1", "taraKg": 2.5, "ativo": true },
+  { "id": "caixa-2", "nome": "Caixa 2", "taraKg": 2.0, "ativo": true }
+]

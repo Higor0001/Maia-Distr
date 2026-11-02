@@ -1,0 +1,5 @@
+[
+  { "id": "carrinho-1", "nome": "Carrinho 1", "taraKg": 25.5, "ativo": true },
+  { "id": "carrinho-2", "nome": "Carrinho 2", "taraKg": 19.0, "ativo": true },
+  { "id": "carrinho-3", "nome": "Carrinho 3", "taraKg": 27.0, "ativo": true }
+]

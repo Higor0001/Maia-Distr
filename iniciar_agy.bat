@@ -1,2 +1,2 @@
 @echo off
-agy --dangerously-skip-permissions
+agy  --dangerously-skip-permissions

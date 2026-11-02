@@ -40,11 +40,22 @@ export interface GeralSettings {
   notificacoesAtivas: boolean
 }
 
+export interface ModulosSettings {
+  moduloEstoqueAtivo: boolean
+  moduloPerdasAtivo: boolean
+  moduloConferenciaAtivo: boolean
+  moduloSeparacaoAtivo: boolean
+  moduloExcelAtivo: boolean
+  moduloCloudR2Ativo: boolean
+  moduloSyncAgentAtivo: boolean
+}
+
 export interface SystemSettings {
   smtp: SmtpSettings
   telegram: TelegramSettings
   smb: SmbSettings
   geral: GeralSettings
+  modulos: ModulosSettings
 }
 
 const SETTINGS_FILE = path.join(process.cwd(), "data", "sistema-configuracoes.json")
@@ -85,6 +96,15 @@ export function getDefaultSettings(): SystemSettings {
       unidadeNome: "Filial Hortigranjeiros",
       notificacoesAtivas: true,
     },
+    modulos: {
+      moduloEstoqueAtivo: false, // Desativado na primeira etapa
+      moduloPerdasAtivo: true,
+      moduloConferenciaAtivo: true,
+      moduloSeparacaoAtivo: false, // Não público até ser ativado
+      moduloExcelAtivo: false, // Requer ativação nas configurações
+      moduloCloudR2Ativo: false,
+      moduloSyncAgentAtivo: false,
+    },
   }
 }
 
@@ -98,6 +118,7 @@ export async function loadLocalSettings(): Promise<SystemSettings> {
       telegram: { ...defaults.telegram, ...(parsed.telegram || {}) },
       smb: { ...defaults.smb, ...(parsed.smb || {}) },
       geral: { ...defaults.geral, ...(parsed.geral || {}) },
+      modulos: { ...defaults.modulos, ...(parsed.modulos || {}) },
     }
   } catch {
     return defaults
@@ -131,6 +152,8 @@ export async function getSystemSettings(): Promise<SystemSettings> {
             settings.smb = { ...settings.smb, ...row.valor }
           } else if (row.chave === "geral" && row.valor) {
             settings.geral = { ...settings.geral, ...row.valor }
+          } else if (row.chave === "modulos" && row.valor) {
+            settings.modulos = { ...settings.modulos, ...row.valor }
           }
         }
       }
@@ -183,6 +206,10 @@ export async function saveSystemSettings(
       ...current.geral,
       ...(updated.geral || {}),
     },
+    modulos: {
+      ...current.modulos,
+      ...(updated.modulos || {}),
+    },
   }
 
   // 1. Salva localmente
@@ -190,7 +217,7 @@ export async function saveSystemSettings(
 
   // 2. Salva no Supabase
   try {
-    const keys = ["smtp", "telegram", "smb", "geral"] as const
+    const keys = ["smtp", "telegram", "smb", "geral", "modulos"] as const
     const now = new Date().toISOString()
     const rows = keys.map((key) => ({
       chave: key,

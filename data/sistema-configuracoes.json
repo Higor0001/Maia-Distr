@@ -1,0 +1,45 @@
+{
+  "smtp": {
+    "enabled": false,
+    "host": "smtp.gmail.com",
+    "port": 587,
+    "secure": false,
+    "user": "",
+    "pass": "",
+    "fromName": "Triagem Filial - Hortigranjeiros",
+    "fromEmail": "",
+    "recipientsEstoqueFilial": [],
+    "recipientsEstoqueMatriz": [],
+    "recipientsPerdas": [],
+    "autoSendEstoque": false,
+    "autoSendPerdas": false
+  },
+  "telegram": {
+    "botToken": "",
+    "chatIdFilial": "",
+    "chatIdMatriz": "",
+    "autoSend": true
+  },
+  "smb": {
+    "enabled": false,
+    "sharePath": "\\\\servidor\\hortifruti\\relatorios",
+    "username": "",
+    "domain": "",
+    "saveEstoquePdf": false,
+    "savePerdasPdf": false
+  },
+  "geral": {
+    "empresaNome": "Maia Distribuidora",
+    "unidadeNome": "Filial Hortigranjeiros",
+    "notificacoesAtivas": true
+  },
+  "modulos": {
+    "moduloEstoqueAtivo": false,
+    "moduloPerdasAtivo": true,
+    "moduloConferenciaAtivo": true,
+    "moduloSeparacaoAtivo": false,
+    "moduloExcelAtivo": false,
+    "moduloCloudR2Ativo": false,
+    "moduloSyncAgentAtivo": false
+  }
+}

@@ -27,6 +27,8 @@ import {
   Download,
   Building2,
   Layers,
+  Scale,
+  Sliders,
   Sparkles,
   ExternalLink,
 } from "lucide-react"
@@ -87,7 +89,7 @@ interface ServicesData {
   smb: { enabled: boolean; configured: boolean; sharePath: string }
 }
 
-type TabType = "overview" | "users" | "smtp" | "telegram" | "smb" | "backup"
+type TabType = "overview" | "users" | "smtp" | "telegram" | "smb" | "backup" | "modulos"
 
 export default function AdminPage() {
   const [activeTab, setActiveTab] = useState<TabType>("overview")
@@ -316,9 +318,47 @@ export default function AdminPage() {
             savePerdasPdf: Boolean(smb.savePerdasPdf),
           })
         }
+        if (data.settings.modulos) {
+          setModulosForm((prev) => ({ ...prev, ...data.settings.modulos }))
+        }
       }
     } catch (err) {
       console.error("Erro ao carregar configurações:", err)
+    }
+  }
+
+  const [modulosForm, setModulosForm] = useState({
+    moduloEstoqueAtivo: false,
+    moduloPerdasAtivo: true,
+    moduloConferenciaAtivo: true,
+    moduloSeparacaoAtivo: false,
+    moduloExcelAtivo: false,
+    moduloCloudR2Ativo: false,
+    moduloSyncAgentAtivo: false,
+  })
+  const [savingModulos, setSavingModulos] = useState(false)
+  const [modulosSuccess, setModulosSuccess] = useState("")
+
+  const handleSaveModulos = async (e: FormEvent) => {
+    e.preventDefault()
+    setSavingModulos(true)
+    setModulosSuccess("")
+    try {
+      const res = await fetch("/api/admin/settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ modulos: modulosForm }),
+      })
+      const data = await res.json()
+      if (res.ok && data?.ok) {
+        setModulosSuccess("Configurações dos módulos operacionais salvas com sucesso!")
+      } else {
+        alert(data?.error || "Erro ao salvar módulos.")
+      }
+    } catch {
+      alert("Erro ao comunicar com o servidor.")
+    } finally {
+      setSavingModulos(false)
     }
   }
 
@@ -1072,7 +1112,7 @@ export default function AdminPage() {
             </div>
 
             <Link
-              href="/gerenciador-estoque"
+              href="/simples-conferencia"
               style={{
                 background: "rgba(255, 255, 255, 0.95)",
                 color: "#1a2a6c",
@@ -1088,8 +1128,8 @@ export default function AdminPage() {
                 gap: "6px",
               }}
             >
-              <Layers className="w-3.5 h-3.5" />
-              <span>Estoque</span>
+              <Scale className="w-3.5 h-3.5 text-emerald-600" />
+              <span>Conferência</span>
             </Link>
 
             <Link
@@ -1255,6 +1295,21 @@ export default function AdminPage() {
           >
             <Download className="w-4 h-4" />
             <span>Backup & Exportação</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab("modulos")}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs whitespace-nowrap transition-all ${
+              activeTab === "modulos"
+                ? "text-white shadow-md"
+                : "text-slate-600 hover:text-[#1a2a6c] hover:bg-white/80"
+            }`}
+            style={{
+              background: activeTab === "modulos" ? "linear-gradient(135deg, #1a2a6c, #2b48a0)" : "transparent",
+            }}
+          >
+            <Sliders className="w-4 h-4" />
+            <span>Módulos Operacionais</span>
           </button>
         </div>
 
@@ -2274,6 +2329,184 @@ export default function AdminPage() {
                 </button>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* ===================================== */}
+        {/* TAB 7: MÓDULOS OPERACIONAIS */}
+        {/* ===================================== */}
+        {activeTab === "modulos" && (
+          <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-sm space-y-6">
+            <div className="flex items-center gap-2.5 pb-4 border-b border-slate-200">
+              <div className="p-2 bg-blue-50 text-[#1a2a6c] rounded-xl border border-blue-100">
+                <Sliders className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold" style={{ color: "#1a2a6c" }}>
+                  Módulos Operacionais & Feature Flags
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Ativação controlada por etapa operacional da Maia Distribuidora
+                </p>
+              </div>
+            </div>
+
+            {modulosSuccess && (
+              <div className="p-3 bg-emerald-50 border border-emerald-300 rounded-xl text-emerald-900 text-xs font-bold flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                <span>{modulosSuccess}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleSaveModulos} className="space-y-4">
+              <div className="divide-y divide-slate-100 border border-slate-200 rounded-2xl overflow-hidden">
+                {/* 1. Estoque */}
+                <div className="p-4 flex items-center justify-between hover:bg-slate-50 transition-colors">
+                  <div>
+                    <div className="font-bold text-sm text-slate-900 flex items-center gap-2">
+                      <span>Gerenciador de Estoque</span>
+                      <span className="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-bold uppercase">
+                        Desativado na Etapa 1
+                      </span>
+                    </div>
+                    <div className="text-xs text-slate-500 mt-0.5">
+                      Contagem, movimentações e baixas de estoque. Tabelas e catálogo permanecem preservados no banco.
+                    </div>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={modulosForm.moduloEstoqueAtivo}
+                    onChange={(e) =>
+                      setModulosForm((prev) => ({ ...prev, moduloEstoqueAtivo: e.target.checked }))
+                    }
+                    className="w-5 h-5 rounded text-[#1a2a6c] accent-[#1a2a6c] cursor-pointer"
+                  />
+                </div>
+
+                {/* 2. Simples Conferência */}
+                <div className="p-4 flex items-center justify-between hover:bg-slate-50 transition-colors">
+                  <div>
+                    <div className="font-bold text-sm text-slate-900 flex items-center gap-2">
+                      <span>Simples Conferência & Pesagem</span>
+                      <span className="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-bold uppercase">
+                        Ativo
+                      </span>
+                    </div>
+                    <div className="text-xs text-slate-500 mt-0.5">
+                      Conferência com taras predefinidas de carrinhos e caixas, cálculo Bruto → Líquido sem baixa de estoque.
+                    </div>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={modulosForm.moduloConferenciaAtivo}
+                    onChange={(e) =>
+                      setModulosForm((prev) => ({ ...prev, moduloConferenciaAtivo: e.target.checked }))
+                    }
+                    className="w-5 h-5 rounded text-[#1a2a6c] accent-[#1a2a6c] cursor-pointer"
+                  />
+                </div>
+
+                {/* 3. Perdas */}
+                <div className="p-4 flex items-center justify-between hover:bg-slate-50 transition-colors">
+                  <div>
+                    <div className="font-bold text-sm text-slate-900 flex items-center gap-2">
+                      <span>Controle de Perdas</span>
+                      <span className="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-bold uppercase">
+                        Ativo
+                      </span>
+                    </div>
+                    <div className="text-xs text-slate-500 mt-0.5">
+                      Registro de ocorrências individuais por motivo, setor, evidência e valor estimado.
+                    </div>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={modulosForm.moduloPerdasAtivo}
+                    onChange={(e) =>
+                      setModulosForm((prev) => ({ ...prev, moduloPerdasAtivo: e.target.checked }))
+                    }
+                    className="w-5 h-5 rounded text-[#1a2a6c] accent-[#1a2a6c] cursor-pointer"
+                  />
+                </div>
+
+                {/* 4. Separação de Pedidos */}
+                <div className="p-4 flex items-center justify-between hover:bg-slate-50 transition-colors">
+                  <div>
+                    <div className="font-bold text-sm text-slate-900 flex items-center gap-2">
+                      <span>Separação & Distribuição de Pedidos</span>
+                      <span className="text-[10px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-bold uppercase">
+                        Não Público por Padrão
+                      </span>
+                    </div>
+                    <div className="text-xs text-slate-500 mt-0.5">
+                      Importação de PDFs, sorteio entre ajudantes, redistribuição com justificativa e visão para 4 tablets.
+                    </div>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={modulosForm.moduloSeparacaoAtivo}
+                    onChange={(e) =>
+                      setModulosForm((prev) => ({ ...prev, moduloSeparacaoAtivo: e.target.checked }))
+                    }
+                    className="w-5 h-5 rounded text-[#1a2a6c] accent-[#1a2a6c] cursor-pointer"
+                  />
+                </div>
+
+                {/* 5. Integração Excel */}
+                <div className="p-4 flex items-center justify-between hover:bg-slate-50 transition-colors">
+                  <div>
+                    <div className="font-bold text-sm text-slate-900 flex items-center gap-2">
+                      <span>Integração Excel — Atualização de Preços</span>
+                      <span className="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-bold uppercase">
+                        Requer Ativação
+                      </span>
+                    </div>
+                    <div className="text-xs text-slate-500 mt-0.5">
+                      Conexão com Microsoft Graph API, OneDrive e prévia comparativa de alteração de preços autorizados.
+                    </div>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={modulosForm.moduloExcelAtivo}
+                    onChange={(e) =>
+                      setModulosForm((prev) => ({ ...prev, moduloExcelAtivo: e.target.checked }))
+                    }
+                    className="w-5 h-5 rounded text-[#1a2a6c] accent-[#1a2a6c] cursor-pointer"
+                  />
+                </div>
+
+                {/* 6. Maia Sync Agent */}
+                <div className="p-4 flex items-center justify-between hover:bg-slate-50 transition-colors">
+                  <div>
+                    <div className="font-bold text-sm text-slate-900 flex items-center gap-2">
+                      <span>Maia Sync Agent (Windows Service)</span>
+                    </div>
+                    <div className="text-xs text-slate-500 mt-0.5">
+                      Automação de fila de relatórios pendentes, salvamento local e envio ao spooler de impressão.
+                    </div>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={modulosForm.moduloSyncAgentAtivo}
+                    onChange={(e) =>
+                      setModulosForm((prev) => ({ ...prev, moduloSyncAgentAtivo: e.target.checked }))
+                    }
+                    className="w-5 h-5 rounded text-[#1a2a6c] accent-[#1a2a6c] cursor-pointer"
+                  />
+                </div>
+              </div>
+
+              <div className="pt-2">
+                <button
+                  type="submit"
+                  disabled={savingModulos}
+                  className="py-2.5 px-6 bg-[#1a2a6c] hover:bg-[#203a8f] text-white font-bold text-xs uppercase tracking-wider rounded-xl shadow-md transition-all flex items-center gap-2 disabled:opacity-50"
+                >
+                  {savingModulos ? <RefreshCw className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+                  <span>Salvar Configurações dos Módulos</span>
+                </button>
+              </div>
+            </form>
           </div>
         )}
       </div>

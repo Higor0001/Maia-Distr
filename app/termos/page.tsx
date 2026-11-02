@@ -2,7 +2,7 @@
 
 import React from "react"
 import Link from "next/link"
-import { Shield, ArrowLeft, Download, FileText, Layers } from "lucide-react"
+import { Shield, ArrowLeft, Download, FileText, Scale } from "lucide-react"
 
 export default function TermosPage() {
   return (
@@ -115,7 +115,7 @@ export default function TermosPage() {
             </a>
 
             <Link
-              href="/gerenciador-estoque"
+              href="/simples-conferencia"
               style={{
                 background: "rgba(255, 255, 255, 0.95)",
                 color: "#1a2a6c",
@@ -131,8 +131,8 @@ export default function TermosPage() {
                 gap: "6px",
               }}
             >
-              <Layers className="w-3.5 h-3.5" />
-              <span>Estoque</span>
+              <Scale className="w-3.5 h-3.5 text-emerald-600" />
+              <span>Conferência</span>
             </Link>
 
             <Link

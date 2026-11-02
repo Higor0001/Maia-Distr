@@ -11,7 +11,7 @@ export interface SessionUser {
   nome: string
   unidade: "filial" | "matriz"
   canRegister: boolean
-  role: "admin" | "operator"
+  role: "admin" | "operator" | "conferente" | "ajudante" | "perdas"
 }
 
 interface SessionPayload extends SessionUser {
@@ -66,12 +66,16 @@ export function getSession(request: Request): SessionUser | null {
     if (payload.exp <= Math.floor(Date.now() / 1000)) return null
     if (!payload.usuario || !payload.nome) return null
 
+    const roleValue = (payload.role as string) || "operator"
+    const validRoles = ["admin", "operator", "conferente", "ajudante", "perdas"] as const
+    const role = validRoles.includes(roleValue as any) ? (roleValue as SessionUser["role"]) : "operator"
+
     return {
       usuario: payload.usuario,
       nome: payload.nome,
       unidade: payload.unidade === "matriz" ? "matriz" : "filial",
       canRegister: Boolean(payload.canRegister),
-      role: payload.role === "admin" ? "admin" : "operator",
+      role,
     }
   } catch {
     return null

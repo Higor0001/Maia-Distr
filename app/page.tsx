@@ -855,7 +855,7 @@ export default function Home() {
               Solicite seu cadastro a um administrador.
             </p>
             <a
-              href="/gerenciador-estoque"
+              href="/simples-conferencia"
               style={{
                 textAlign: "center",
                 fontSize: "12px",
@@ -864,7 +864,7 @@ export default function Home() {
                 textDecoration: "none",
               }}
             >
-              Gerenciador de estoque
+              ⚖️ Simples Conferência
             </a>
             <a
               href="/termos"
@@ -1052,6 +1052,24 @@ export default function Home() {
                   ⚙️ Painel Admin
                 </a>
               )}
+              <a
+                href="/simples-conferencia"
+                style={{
+                  color: "#ffffff",
+                  background: "#059669",
+                  fontWeight: 700,
+                  fontSize: "12px",
+                  padding: "5px 12px",
+                  borderRadius: "6px",
+                  textDecoration: "none",
+                  boxShadow: "0 2px 6px rgba(5,150,105,0.2)",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "4px",
+                }}
+              >
+                ⚖️ Simples Conferência
+              </a>
               <a
                 href="/termos"
                 style={{
@@ -1534,15 +1552,15 @@ export default function Home() {
             </button>
             <button
               onClick={() => {
-                window.location.href = "/gerenciador-estoque"
+                window.location.href = "/simples-conferencia"
               }}
               style={{
                 flex: 1,
-                background: "#1a2a6c",
+                background: "#059669",
                 marginTop: "0",
               }}
             >
-              📦 Gerenciador de Estoque
+              ⚖️ Simples Conferência
             </button>
           </div>
         </div>
