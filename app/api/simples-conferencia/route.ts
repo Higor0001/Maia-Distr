@@ -20,6 +20,33 @@ export async function POST(request: Request) {
   try {
     const session = getSession(request)
     const body = await request.json()
+    const responsavel = body.responsavel || session?.nome || session?.usuario || "Operador Balança"
+
+    // Suporte a lote de múltiplos itens adicionados
+    if (Array.isArray(body.items) && body.items.length > 0) {
+      const savedItems = []
+      for (const it of body.items) {
+        if (!it.produtoNome || it.pesoBruto === undefined) continue
+        const saved = await addSimplesConferencia({
+          produtoReduzido: it.produtoReduzido,
+          produtoNome: it.produtoNome,
+          responsavel,
+          pesoBruto: Number(it.pesoBruto),
+          tipoCarrinhoId: it.tipoCarrinhoId,
+          tipoCarrinhoNome: it.tipoCarrinhoNome,
+          taraCarrinhoKg: Number(it.taraCarrinhoKg || 0),
+          tipoCaixaId: it.tipoCaixaId,
+          tipoCaixaNome: it.tipoCaixaNome,
+          quantidadeCaixas: Math.max(1, Number(it.quantidadeCaixas) || 1),
+          taraCaixaKg: Number(it.taraCaixaKg || 0),
+          pesoLiquido: Number(it.pesoLiquido),
+          observacao: it.observacao || body.observacao || "",
+          fotoUrl: it.fotoUrl || body.fotoUrl || "",
+        })
+        savedItems.push(saved)
+      }
+      return NextResponse.json({ ok: true, items: savedItems, count: savedItems.length })
+    }
 
     if (!body.produtoNome || body.pesoBruto === undefined) {
       return NextResponse.json(
@@ -27,8 +54,6 @@ export async function POST(request: Request) {
         { status: 400 }
       )
     }
-
-    const responsavel = body.responsavel || session?.nome || session?.usuario || "Operador Balança"
 
     const saved = await addSimplesConferencia({
       produtoReduzido: body.produtoReduzido,

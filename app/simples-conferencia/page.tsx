@@ -36,6 +36,21 @@ interface ConferenciaRecord {
   createdAt: string
 }
 
+interface ConferenciaItemTemp {
+  id: string
+  produtoReduzido?: string
+  produtoNome: string
+  pesoBruto: number
+  tipoCarrinhoId?: string
+  tipoCarrinhoNome?: string
+  taraCarrinhoKg: number
+  tipoCaixaId?: string
+  tipoCaixaNome?: string
+  quantidadeCaixas: number
+  taraCaixaKg: number
+  pesoLiquido: number
+}
+
 export default function SimplesConferenciaPage() {
   const [loggedUser, setLoggedUser] = useState<{
     usuario: string
@@ -59,7 +74,10 @@ export default function SimplesConferenciaPage() {
   const [caixas, setCaixas] = useState<EquipmentTara[]>([])
   const [conferencias, setConferencias] = useState<ConferenciaRecord[]>([])
 
-  // Formulário de Conferência
+  // Lista de Itens adicionados para gravação (como no Perdas)
+  const [currentItems, setCurrentItems] = useState<ConferenciaItemTemp[]>([])
+
+  // Formulário de Entrada da Balança
   const [currentScreen, setCurrentScreen] = useState<"balanca" | "relatorio" | "taras">("balanca")
   const [productInput, setProductInput] = useState("")
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
@@ -206,6 +224,16 @@ export default function SimplesConferenciaPage() {
   const pesoBrutoNum = parseFloat(pesoBrutoInput.replace(",", ".")) || 0
   const pesoLiquidoNum = Math.max(0, Number((pesoBrutoNum - taraTotal).toFixed(3)))
 
+  // Totais da lista de itens acumulados
+  const totalListaBruto = useMemo(
+    () => currentItems.reduce((acc, it) => acc + (it.pesoBruto || 0), 0),
+    [currentItems]
+  )
+  const totalListaLiquido = useMemo(
+    () => currentItems.reduce((acc, it) => acc + (it.pesoLiquido || 0), 0),
+    [currentItems]
+  )
+
   // Câmera nativa
   const startCamera = async () => {
     try {
@@ -267,10 +295,96 @@ export default function SimplesConferenciaPage() {
     }
   }
 
-  // Salvar Simples Conferência
-  const handleSalvarConferencia = async () => {
+  // ➕ ADICIONAR ITEM À LISTA (Igual ao módulo de perdas)
+  const handleAddItem = () => {
     if (!productInput.trim()) {
       setStatusMessage({ text: "Selecione ou digite o nome do produto.", type: "error" })
+      return
+    }
+    if (pesoBrutoNum <= 0) {
+      setStatusMessage({ text: "Informe um peso bruto válido maior que zero.", type: "error" })
+      return
+    }
+
+    const newItem: ConferenciaItemTemp = {
+      id: `item_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+      produtoReduzido: selectedProduct?.reduzido || "",
+      produtoNome: productInput.trim(),
+      pesoBruto: pesoBrutoNum,
+      tipoCarrinhoId: selectedCarrinho?.id || "",
+      tipoCarrinhoNome: selectedCarrinho?.nome || "",
+      taraCarrinhoKg: taraCarrinho,
+      tipoCaixaId: selectedCaixa?.id || "",
+      tipoCaixaNome: selectedCaixa?.nome || "",
+      quantidadeCaixas: qtdCaixasNum,
+      taraCaixaKg: taraCaixasTotal,
+      pesoLiquido: pesoLiquidoNum,
+    }
+
+    setCurrentItems((prev) => [...prev, newItem])
+    setStatusMessage({
+      text: `✅ Item adicionado à lista: ${newItem.produtoNome} (${newItem.pesoLiquido.toFixed(2)} kg líquido)`,
+      type: "success",
+    })
+
+    // Limpa produto e peso para permitir lançar o próximo item rapidamente mantendo carrinho se desejado
+    setProductInput("")
+    setSelectedProduct(null)
+    setPesoBrutoInput("")
+  }
+
+  const handleRemoveItem = (id: string) => {
+    setCurrentItems((prev) => prev.filter((it) => it.id !== id))
+  }
+
+  // SALVAR CONFERÊNCIA (Lote de Itens ou Item Individual)
+  const handleSalvarConferencia = async () => {
+    // Caso 1: Gravação em lote a partir da lista
+    if (currentItems.length > 0) {
+      setIsSaving(true)
+      try {
+        const res = await fetch("/api/simples-conferencia", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            items: currentItems,
+            responsavel: loggedUser?.nome || loggedUser?.usuario || "Operador Balança",
+            observacao: observacao.trim(),
+            fotoUrl: photoPreview || "",
+          }),
+        })
+
+        const data = await res.json()
+        if (!res.ok || !data.ok) {
+          throw new Error(data.error || "Erro ao gravar lista de conferência.")
+        }
+
+        setStatusMessage({
+          text: `🎉 ${data.count || currentItems.length} item(ns) de conferência gravado(s) com sucesso! Total Líquido: ${totalListaLiquido.toFixed(2)} kg`,
+          type: "success",
+        })
+
+        if (Array.isArray(data.items)) {
+          setConferencias((prev) => [...data.items, ...(Array.isArray(prev) ? prev : [])])
+        }
+
+        setCurrentItems([])
+        setProductInput("")
+        setSelectedProduct(null)
+        setPesoBrutoInput("")
+        setObservacao("")
+        setPhotoPreview("")
+      } catch (err: any) {
+        setStatusMessage({ text: err.message || "Falha ao gravar conferência.", type: "error" })
+      } finally {
+        setIsSaving(false)
+      }
+      return
+    }
+
+    // Caso 2: Gravação direta de item individual (sem ter clicado antes em Adicionar à Lista)
+    if (!productInput.trim()) {
+      setStatusMessage({ text: "Adicione itens à lista ou selecione um produto para gravar.", type: "error" })
       return
     }
     if (pesoBrutoNum <= 0) {
@@ -316,7 +430,8 @@ export default function SimplesConferenciaPage() {
 
       setConferencias((prev) => [data.item, ...(Array.isArray(prev) ? prev : [])])
 
-      // Limpa dados mantendo carrinho para a próxima pesagem rápida
+      setProductInput("")
+      setSelectedProduct(null)
       setPesoBrutoInput("")
       setObservacao("")
       setPhotoPreview("")
@@ -1069,7 +1184,7 @@ export default function SimplesConferenciaPage() {
                   marginBottom: "8px",
                 }}
               >
-                Resultado da Pesagem Automática
+                Resultado da Pesagem Atual
               </div>
 
               <div
@@ -1099,7 +1214,7 @@ export default function SimplesConferenciaPage() {
                 </div>
 
                 <div style={{ textAlign: "right" }}>
-                  <div style={{ fontSize: "12px", color: "#fdbb2d" }}>Peso Líquido Final:</div>
+                  <div style={{ fontSize: "12px", color: "#fdbb2d" }}>Peso Líquido:</div>
                   <div
                     style={{
                       fontSize: "34px",
@@ -1157,6 +1272,169 @@ export default function SimplesConferenciaPage() {
                 </div>
               </div>
             </div>
+
+            {/* BOTÃO ➕ ADICIONAR ITEM À LISTA (PADRÃO PERDAS) */}
+            <div style={{ marginBottom: "20px" }}>
+              <button
+                type="button"
+                onClick={handleAddItem}
+                disabled={!productInput.trim() || pesoBrutoNum <= 0}
+                style={{
+                  background:
+                    productInput.trim() && pesoBrutoNum > 0
+                      ? "#28a745"
+                      : "#6c757d",
+                  color: "white",
+                  padding: "14px",
+                  fontSize: "16px",
+                  fontWeight: "bold",
+                  borderRadius: "10px",
+                  border: "none",
+                  cursor: productInput.trim() && pesoBrutoNum > 0 ? "pointer" : "not-allowed",
+                  boxShadow: "0 4px 10px rgba(40,167,69,0.25)",
+                  marginTop: 0,
+                  width: "100%",
+                }}
+              >
+                ➕ Adicionar Item à Lista
+              </button>
+            </div>
+
+            {/* LISTA DE ITENS ADICIONADOS (PADRÃO CONTROLE DE PERDAS) */}
+            {currentItems.length > 0 && (
+              <div
+                style={{
+                  marginBottom: "20px",
+                  padding: "16px",
+                  background: "rgba(26, 42, 108, 0.05)",
+                  borderRadius: "12px",
+                  border: "1px solid rgba(26, 42, 108, 0.15)",
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    marginBottom: "12px",
+                    flexWrap: "wrap",
+                    gap: "8px",
+                  }}
+                >
+                  <h3 style={{ color: "#1a2a6c", margin: 0, fontSize: "16px", fontWeight: "bold" }}>
+                    📋 Itens na Fila de Conferência ({currentItems.length}):
+                  </h3>
+                  <div style={{ display: "flex", gap: "6px" }}>
+                    <span
+                      style={{
+                        background: "#1a2a6c",
+                        color: "white",
+                        padding: "4px 10px",
+                        borderRadius: "15px",
+                        fontSize: "12px",
+                        fontWeight: "bold",
+                      }}
+                    >
+                      Total Líquido: {totalListaLiquido.toFixed(2)} kg
+                    </span>
+                    <span
+                      style={{
+                        background: "#6c757d",
+                        color: "white",
+                        padding: "4px 10px",
+                        borderRadius: "15px",
+                        fontSize: "12px",
+                        fontWeight: "bold",
+                      }}
+                    >
+                      Total Bruto: {totalListaBruto.toFixed(2)} kg
+                    </span>
+                  </div>
+                </div>
+
+                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                  {currentItems.map((it, idx) => (
+                    <div
+                      key={it.id}
+                      style={{
+                        background: "white",
+                        padding: "12px",
+                        borderRadius: "8px",
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        border: "1px solid #cbd5e1",
+                        boxShadow: "0 2px 4px rgba(0,0,0,0.04)",
+                        gap: "10px",
+                      }}
+                    >
+                      <div style={{ flex: 1 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                          <strong style={{ color: "#1a2a6c", fontSize: "14px" }}>
+                            #{idx + 1} {it.produtoNome}
+                          </strong>
+                          {it.produtoReduzido && (
+                            <span style={{ fontSize: "11px", color: "#64748b" }}>(Cód: {it.produtoReduzido})</span>
+                          )}
+                        </div>
+                        <div style={{ fontSize: "12px", color: "#475569", marginTop: "4px" }}>
+                          <span>Bruto: {it.pesoBruto.toFixed(2)} kg</span>
+                          {it.tipoCarrinhoNome && (
+                            <span> • {it.tipoCarrinhoNome} (-{it.taraCarrinhoKg.toFixed(2)}kg)</span>
+                          )}
+                          {it.tipoCaixaNome && (
+                            <span> • {it.quantidadeCaixas}x {it.tipoCaixaNome} (-{it.taraCaixaKg.toFixed(2)}kg)</span>
+                          )}
+                          <span style={{ marginLeft: "8px", fontWeight: "bold", color: "#155724" }}>
+                            ➡️ Líquido: {it.pesoLiquido.toFixed(2)} kg
+                          </span>
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveItem(it.id)}
+                        style={{
+                          background: "#dc3545",
+                          color: "white",
+                          padding: "6px 12px",
+                          borderRadius: "6px",
+                          fontSize: "12px",
+                          fontWeight: "bold",
+                          width: "auto",
+                          marginTop: 0,
+                          cursor: "pointer",
+                          border: "none",
+                        }}
+                      >
+                        🗑️ Remover
+                      </button>
+                    </div>
+                  ))}
+                </div>
+
+                <div style={{ marginTop: "10px", textAlign: "right" }}>
+                  <button
+                    type="button"
+                    onClick={() => setCurrentItems([])}
+                    style={{
+                      background: "transparent",
+                      color: "#dc3545",
+                      border: "none",
+                      fontSize: "12px",
+                      fontWeight: "bold",
+                      cursor: "pointer",
+                      textDecoration: "underline",
+                      width: "auto",
+                      padding: 0,
+                      marginTop: 0,
+                    }}
+                  >
+                    Limpar toda a lista
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* Evidência Fotográfica Opcional */}
             <div
@@ -1268,11 +1546,11 @@ export default function SimplesConferenciaPage() {
             {/* BOTÃO PRINCIPAL DE SALVAR CONFERÊNCIA */}
             <button
               type="button"
-              disabled={isSaving || pesoBrutoNum <= 0}
+              disabled={isSaving || (currentItems.length === 0 && (!productInput.trim() || pesoBrutoNum <= 0))}
               onClick={handleSalvarConferencia}
               style={{
                 background:
-                  pesoBrutoNum > 0
+                  currentItems.length > 0 || (productInput.trim() && pesoBrutoNum > 0)
                     ? "linear-gradient(to right, #1a2a6c, #b21f1f)"
                     : "#6c757d",
                 padding: "16px",
@@ -1282,7 +1560,11 @@ export default function SimplesConferenciaPage() {
                 boxShadow: "0 4px 10px rgba(0,0,0,0.2)",
               }}
             >
-              {isSaving ? "⏳ Gravando Conferência..." : "💾 Confirmar e Salvar Conferência"}
+              {isSaving
+                ? "⏳ Gravando Conferência..."
+                : currentItems.length > 0
+                ? `💾 Confirmar e Gravar Todos os Itens (${currentItems.length}) — ${totalListaLiquido.toFixed(2)} kg`
+                : "💾 Confirmar e Salvar Conferência"}
             </button>
           </>
         )}

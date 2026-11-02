@@ -2,7 +2,7 @@
 
 Data de Atualização: 01/11/2026
 Repositório: `C:\Users\user\Downloads\Maia-Distr-main`
-Status: Compilação de Produção Next.js Concluída com Sucesso.
+Status: Compilação de Produção Next.js Concluída com Sucesso (32 rotas estáticas e dinâmicas geradas sem erros).
 
 ---
 
@@ -17,19 +17,19 @@ Status: Compilação de Produção Next.js Concluída com Sucesso.
   - Botões inativos em `#e9ecef` com texto em `#1a2a6c`.
   - Barra de navegação inferior idêntica à do Controle de Perdas.
 
-### B. Quantidade de Caixas na Simples Conferência
-- **Funcionalidade:** Permite informar a **quantidade de caixas** utilizadas no lote da balança (ex: 1, 5, 10, 20 caixas).
-- **Cálculo da Tara Total:**
-  $$\text{Tara Caixas Total} = \text{Quantidade de Caixas} \times \text{Tara Unitária da Caixa}$$
-  $$\text{Tara Total} = \text{Tara do Carrinho} + \text{Tara Caixas Total}$$
-  $$\text{Peso Líquido} = \text{Peso Bruto} - \text{Tara Total}$$
-- **Controles Operacionais:**
-  - Stepper rápido `+` e `-`.
-  - Campo numérico direto.
-  - Chips de atalho rápido: `1`, `2`, `3`, `4`, `5`, `6`, `8`, `10`, `12`, `15`, `20`, `25`, `30`, `40`, `50` caixas.
-- **Detalhamento no Painel de Pesagem:**
-  - Exibição discriminada da tara do carrinho e da tara total das caixas.
-  - Gravação da quantidade de caixas no histórico e inclusão na exportação em CSV.
+### B. Quantidade de Caixas e Lista com "Adicionar Item" (Padrão Perdas)
+- **Botão "➕ Adicionar Item à Lista":** Exatamente como no módulo de Controle de Perdas, o operador pode:
+  1. Digitar/selecionar o produto hortigranjeiro.
+  2. Informar o peso bruto medido na balança.
+  3. Selecionar o carrinho (desconto de tara) e o tipo de caixa.
+  4. Informar o **número de caixas** (stepper `+`/`-`, digitação ou botões rápidos de `1` a `50` caixas).
+  5. Clicar em **➕ Adicionar Item à Lista** (botão verde `#28a745`).
+- **Lista de Itens na Fila de Conferência:**
+  - Mostra todos os itens adicionados com número do item, nome, código reduzido, bruto, tara do carrinho, tara das caixas e peso líquido.
+  - Totalizador acumulado em tempo real: `Total Líquido: X.XX kg` e `Total Bruto: Y.YY kg`.
+  - Botão de remoção individual `🗑️ Remover` para cada item da lista.
+  - Botão `Limpar toda a lista`.
+- **Gravação em Lote:** O botão principal `💾 Confirmar e Gravar Todos os Itens (N)` grava todos os produtos da fila de uma só vez via `/api/simples-conferencia`. Se o operador não adicionou itens à lista mas preencheu o produto diretamente, ele permite a gravação avulsa imediata.
 
 ### C. Maia Sync Agent como Setup para Computador Externo
 - **Arquitetura Autônoma:** O Maia Sync Agent é um pacote independente para ser instalado no computador da balança ou da expedição, e **não** um componente web do navegador.
@@ -57,11 +57,11 @@ Status: Compilação de Produção Next.js Concluída com Sucesso.
 
 | Arquivo / Pasta | Finalidade |
 |---|---|
-| `app/simples-conferencia/page.tsx` | Simples Conferência com mesmo layout de perdas e seletor de quantidade de caixas |
+| `app/simples-conferencia/page.tsx` | Simples Conferência com layout de perdas, seletor de caixas e lista de itens adicionados |
 | `app/page.tsx` | Controle de Perdas com links e navegação dinâmica por módulo ativo |
 | `app/admin/page.tsx` | Painel Admin com ativação de feature flags e download do setup do Sync Agent |
 | `app/api/modulos/route.ts` | Endpoint público em tempo real para flags operacionais |
-| `app/api/simples-conferencia/route.ts` | Registro e consulta de pesagens com quantidade de caixas |
+| `app/api/simples-conferencia/route.ts` | Registro em lote e individual com quantidade de caixas |
 | `lib/conferencia.ts` | Camada de persistência e cálculo de taras e caixas |
 | `setup-maia-sync-agent/` | Pasta do instalador autônomo para computadores externos Windows |
 | `public/downloads/setup-maia-sync-agent.zip` | Pacote ZIP para download no painel administrativo |
