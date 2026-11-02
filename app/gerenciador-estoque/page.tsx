@@ -226,10 +226,10 @@ export default function GerenciadorEstoquePage() {
   const [loadingModuloConfig, setLoadingModuloConfig] = useState(true)
 
   useEffect(() => {
-    fetch("/api/admin/settings")
+    fetch("/api/modulos")
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
-        if (data?.settings?.modulos?.moduloEstoqueAtivo) {
+        if (data?.modulos?.moduloEstoqueAtivo) {
           setModuloEstoqueAtivo(true)
         }
       })

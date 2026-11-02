@@ -1,0 +1,39 @@
+================================================================================
+                    MAIA DISTRIBUIDORA - MAIA SYNC AGENT
+          Agente Autônomo Windows para Computadores Externos (Balança / Expedição)
+================================================================================
+
+Este pacote é um SETUP INDEPENDENTE para instalar em computadores externos
+(por exemplo, o computador conectado à balança ou à impressora de expedição).
+Ele NÃO é executado dentro do navegador web.
+
+--------------------------------------------------------------------------------
+COMO INSTALAR NO COMPUTADOR DA BALANÇA / EXPEDIÇÃO:
+--------------------------------------------------------------------------------
+1. Copie toda esta pasta "setup-maia-sync-agent" para o computador de destino
+   (ex: via Pen Drive ou Rede Local).
+2. Certifique-se de que o Python 3.9+ está instalado no computador:
+   - Caso não esteja instalado, baixe gratuitamente de: https://www.python.org/downloads/
+   - ATENÇÃO: Na primeira tela do instalador do Python, marque a caixa:
+     "[X] Add Python to PATH"
+3. Dê dois cliques no arquivo:
+   INSTALADOR_WINDOWS.bat
+4. Pronto! O agente será registrado para iniciar automaticamente com o Windows.
+
+--------------------------------------------------------------------------------
+CONFIGURAÇÃO:
+--------------------------------------------------------------------------------
+O arquivo "config.json" contém as seguintes opções:
+- "servidorUrl": URL do servidor Maia (padrão: "https://maiaestoque.vercel.app")
+- "intervaloPollingSegundos": Intervalo de checagem da fila (padrão: 10 segundos)
+- "pastaDestino": Pasta onde os relatórios PDF/CSV serão gravados (padrão: "C:\\MaiaRelatorios")
+- "imprimirAutomaticamente": true ou false (se true, envia direto para a impressora)
+- "nomeImpressora": Nome da impressora no Windows (se vazio, usa a impressora padrão)
+
+--------------------------------------------------------------------------------
+COMO DESINSTALAR:
+--------------------------------------------------------------------------------
+Dê dois cliques no arquivo:
+DESINSTALAR.bat
+Ele removerá o início automático do Windows e encerrará o processo.
+================================================================================

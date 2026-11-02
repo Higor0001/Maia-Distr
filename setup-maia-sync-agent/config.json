@@ -1,0 +1,8 @@
+{
+  "servidorUrl": "https://maiaestoque.vercel.app",
+  "intervaloPollingSegundos": 10,
+  "pastaDestino": "C:\\MaiaRelatorios",
+  "imprimirAutomaticamente": false,
+  "nomeImpressora": "",
+  "tokenAcesso": ""
+}

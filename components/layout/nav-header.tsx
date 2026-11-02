@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Scale, AlertTriangle, Layers, ShieldCheck, LogOut, Menu, X, FileText, Settings } from "lucide-react"
+import { Scale, AlertTriangle, Layers, ShieldCheck, LogOut, Menu, X, FileText, Settings, Package, FileSpreadsheet } from "lucide-react"
 
 interface NavHeaderProps {
   user?: {
@@ -20,16 +20,18 @@ export function NavHeader({ user, onLogout }: NavHeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [modulos, setModulos] = useState({
     moduloEstoqueAtivo: false,
+    moduloPerdasAtivo: true,
+    moduloConferenciaAtivo: true,
     moduloSeparacaoAtivo: false,
     moduloExcelAtivo: false,
   })
 
   useEffect(() => {
-    fetch("/api/admin/settings")
+    fetch("/api/modulos")
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
-        if (data?.settings?.modulos) {
-          setModulos(data.settings.modulos)
+        if (data?.modulos) {
+          setModulos((prev) => ({ ...prev, ...data.modulos }))
         }
       })
       .catch(() => {})
@@ -45,13 +47,25 @@ export function NavHeader({ user, onLogout }: NavHeaderProps) {
       badgeColor: "bg-emerald-500",
     },
     {
-      href: "/perdas",
-      label: "Perdas",
+      href: "/",
+      label: "Controle de Perdas",
       icon: AlertTriangle,
-      active: pathname === "/perdas" || pathname === "/",
+      active: pathname === "/" || pathname === "/perdas",
       badge: null,
       badgeColor: "",
     },
+    ...(modulos.moduloEstoqueAtivo || user?.role === "admin"
+      ? [
+          {
+            href: "/gerenciador-estoque",
+            label: "Gerenciador de Estoque",
+            icon: Package,
+            active: pathname.startsWith("/gerenciador-estoque"),
+            badge: !modulos.moduloEstoqueAtivo ? "Admin" : null,
+            badgeColor: "bg-slate-500",
+          },
+        ]
+      : []),
     ...(modulos.moduloSeparacaoAtivo || user?.role === "admin"
       ? [
           {
@@ -61,6 +75,18 @@ export function NavHeader({ user, onLogout }: NavHeaderProps) {
             active: pathname.startsWith("/separacao"),
             badge: !modulos.moduloSeparacaoAtivo ? "Admin / Prévia" : null,
             badgeColor: "bg-amber-500",
+          },
+        ]
+      : []),
+    ...(modulos.moduloExcelAtivo || user?.role === "admin"
+      ? [
+          {
+            href: "/precos",
+            label: "Atualização de Preços",
+            icon: FileSpreadsheet,
+            active: pathname.startsWith("/precos"),
+            badge: !modulos.moduloExcelAtivo ? "Admin" : null,
+            badgeColor: "bg-blue-500",
           },
         ]
       : []),

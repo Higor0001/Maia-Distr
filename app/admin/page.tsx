@@ -2476,23 +2476,41 @@ export default function AdminPage() {
                 </div>
 
                 {/* 6. Maia Sync Agent */}
-                <div className="p-4 flex items-center justify-between hover:bg-slate-50 transition-colors">
-                  <div>
-                    <div className="font-bold text-sm text-slate-900 flex items-center gap-2">
-                      <span>Maia Sync Agent (Windows Service)</span>
+                <div className="p-4 hover:bg-slate-50 transition-colors space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="font-bold text-sm text-slate-900 flex items-center gap-2">
+                        <span>Maia Sync Agent (Setup para Computador Externo)</span>
+                        <span className="text-[10px] bg-blue-100 text-[#1a2a6c] px-2 py-0.5 rounded-full font-bold uppercase">
+                          App Windows Autônomo
+                        </span>
+                      </div>
+                      <div className="text-xs text-slate-500 mt-0.5">
+                        Aplicativo instalado diretamente no computador da balança ou da expedição. Não roda no navegador.
+                      </div>
                     </div>
-                    <div className="text-xs text-slate-500 mt-0.5">
-                      Automação de fila de relatórios pendentes, salvamento local e envio ao spooler de impressão.
-                    </div>
+                    <input
+                      type="checkbox"
+                      checked={modulosForm.moduloSyncAgentAtivo}
+                      onChange={(e) =>
+                        setModulosForm((prev) => ({ ...prev, moduloSyncAgentAtivo: e.target.checked }))
+                      }
+                      className="w-5 h-5 rounded text-[#1a2a6c] accent-[#1a2a6c] cursor-pointer"
+                    />
                   </div>
-                  <input
-                    type="checkbox"
-                    checked={modulosForm.moduloSyncAgentAtivo}
-                    onChange={(e) =>
-                      setModulosForm((prev) => ({ ...prev, moduloSyncAgentAtivo: e.target.checked }))
-                    }
-                    className="w-5 h-5 rounded text-[#1a2a6c] accent-[#1a2a6c] cursor-pointer"
-                  />
+
+                  <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                    <div className="text-xs text-slate-600">
+                      <strong className="text-slate-800">Instalação em outro PC:</strong> Baixe o arquivo ZIP, descompacte no computador da balança e execute <code className="bg-slate-200 px-1 py-0.5 rounded font-mono font-bold text-slate-800">INSTALADOR_WINDOWS.bat</code>.
+                    </div>
+                    <a
+                      href="/downloads/setup-maia-sync-agent.zip"
+                      download="setup-maia-sync-agent.zip"
+                      className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-[#1a2a6c] hover:bg-[#203a8f] text-white text-xs font-bold rounded-lg shadow transition-all shrink-0"
+                    >
+                      <span>📥 Baixar Setup (.zip)</span>
+                    </a>
+                  </div>
                 </div>
               </div>
 

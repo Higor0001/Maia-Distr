@@ -2,6 +2,7 @@
 
 import type React from "react"
 import { useState, useEffect, useRef } from "react"
+import Link from "next/link"
 
 const CATEGORIES = [
   { id: "puxada", label: "🚚 Perda na Puxada", emoji: "🚚" },
@@ -86,6 +87,14 @@ export default function Home() {
   const [firstAccessSuccess, setFirstAccessSuccess] = useState("")
   const [firstAccessLoading, setFirstAccessLoading] = useState(false)
 
+  const [modulos, setModulos] = useState({
+    moduloEstoqueAtivo: false,
+    moduloPerdasAtivo: true,
+    moduloConferenciaAtivo: true,
+    moduloSeparacaoAtivo: false,
+    moduloExcelAtivo: false,
+  })
+
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const streamRef = useRef<MediaStream | null>(null)
@@ -95,6 +104,15 @@ export default function Home() {
     // Limpar dados legados de bebidas/triagem
     localStorage.removeItem("bicadaData")
     localStorage.removeItem("occurrences")
+
+    fetch("/api/modulos")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.modulos) {
+          setModulos((prev) => ({ ...prev, ...data.modulos }))
+        }
+      })
+      .catch(() => undefined)
 
     fetch("/api/session")
       .then((res) => res.json())
@@ -1036,7 +1054,7 @@ export default function Home() {
                 </span>
               )}
               {loggedUser?.role === "admin" && (
-                <a
+                <Link
                   href="/admin"
                   style={{
                     color: "#ffffff",
@@ -1050,27 +1068,89 @@ export default function Home() {
                   }}
                 >
                   ⚙️ Painel Admin
-                </a>
+                </Link>
               )}
-              <a
-                href="/simples-conferencia"
-                style={{
-                  color: "#ffffff",
-                  background: "#059669",
-                  fontWeight: 700,
-                  fontSize: "12px",
-                  padding: "5px 12px",
-                  borderRadius: "6px",
-                  textDecoration: "none",
-                  boxShadow: "0 2px 6px rgba(5,150,105,0.2)",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "4px",
-                }}
-              >
-                ⚖️ Simples Conferência
-              </a>
-              <a
+              {modulos.moduloConferenciaAtivo !== false && (
+                <Link
+                  href="/simples-conferencia"
+                  style={{
+                    color: "#ffffff",
+                    background: "#059669",
+                    fontWeight: 700,
+                    fontSize: "12px",
+                    padding: "5px 12px",
+                    borderRadius: "6px",
+                    textDecoration: "none",
+                    boxShadow: "0 2px 6px rgba(5,150,105,0.2)",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "4px",
+                  }}
+                >
+                  ⚖️ Simples Conferência
+                </Link>
+              )}
+              {(modulos.moduloEstoqueAtivo || loggedUser?.role === "admin") && (
+                <Link
+                  href="/gerenciador-estoque"
+                  style={{
+                    color: "#ffffff",
+                    background: "#4b5563",
+                    fontWeight: 700,
+                    fontSize: "12px",
+                    padding: "5px 12px",
+                    borderRadius: "6px",
+                    textDecoration: "none",
+                    boxShadow: "0 2px 6px rgba(75,85,99,0.2)",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "4px",
+                  }}
+                >
+                  📦 Gerenciador de Estoque
+                </Link>
+              )}
+              {(modulos.moduloSeparacaoAtivo || loggedUser?.role === "admin") && (
+                <Link
+                  href="/separacao"
+                  style={{
+                    color: "#ffffff",
+                    background: "#d97706",
+                    fontWeight: 700,
+                    fontSize: "12px",
+                    padding: "5px 12px",
+                    borderRadius: "6px",
+                    textDecoration: "none",
+                    boxShadow: "0 2px 6px rgba(217,119,6,0.2)",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "4px",
+                  }}
+                >
+                  📋 Separação de Pedidos
+                </Link>
+              )}
+              {(modulos.moduloExcelAtivo || loggedUser?.role === "admin") && (
+                <Link
+                  href="/precos"
+                  style={{
+                    color: "#ffffff",
+                    background: "#2563eb",
+                    fontWeight: 700,
+                    fontSize: "12px",
+                    padding: "5px 12px",
+                    borderRadius: "6px",
+                    textDecoration: "none",
+                    boxShadow: "0 2px 6px rgba(37,99,235,0.2)",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "4px",
+                  }}
+                >
+                  📊 Atualização de Preços
+                </Link>
+              )}
+              <Link
                 href="/termos"
                 style={{
                   color: "#1a2a6c",
@@ -1084,7 +1164,7 @@ export default function Home() {
                 }}
               >
                 📄 Termos
-              </a>
+              </Link>
               <button
                 type="button"
                 onClick={handleLogout}
@@ -1526,7 +1606,7 @@ export default function Home() {
           </button>
 
           {/* Navigation */}
-          <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+          <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
             <button
               onClick={() => {
                 setSelectedOccurrence(null)
@@ -1534,6 +1614,7 @@ export default function Home() {
               }}
               style={{
                 flex: 1,
+                minWidth: "140px",
                 background: "#17a2b8",
                 marginTop: "0",
               }}
@@ -1544,24 +1625,73 @@ export default function Home() {
               onClick={() => setCurrentScreen("settings")}
               style={{
                 flex: 1,
+                minWidth: "120px",
                 background: "#6c757d",
                 marginTop: "0",
               }}
             >
               ⚙️ Configurações
             </button>
-            <button
-              onClick={() => {
-                window.location.href = "/simples-conferencia"
-              }}
-              style={{
-                flex: 1,
-                background: "#059669",
-                marginTop: "0",
-              }}
-            >
-              ⚖️ Simples Conferência
-            </button>
+            {modulos.moduloConferenciaAtivo !== false && (
+              <button
+                onClick={() => {
+                  window.location.href = "/simples-conferencia"
+                }}
+                style={{
+                  flex: 1,
+                  minWidth: "140px",
+                  background: "#059669",
+                  marginTop: "0",
+                }}
+              >
+                ⚖️ Simples Conferência
+              </button>
+            )}
+            {(modulos.moduloEstoqueAtivo || loggedUser?.role === "admin") && (
+              <button
+                onClick={() => {
+                  window.location.href = "/gerenciador-estoque"
+                }}
+                style={{
+                  flex: 1,
+                  minWidth: "140px",
+                  background: "#4b5563",
+                  marginTop: "0",
+                }}
+              >
+                📦 Estoque
+              </button>
+            )}
+            {(modulos.moduloSeparacaoAtivo || loggedUser?.role === "admin") && (
+              <button
+                onClick={() => {
+                  window.location.href = "/separacao"
+                }}
+                style={{
+                  flex: 1,
+                  minWidth: "140px",
+                  background: "#d97706",
+                  marginTop: "0",
+                }}
+              >
+                📋 Separação
+              </button>
+            )}
+            {(modulos.moduloExcelAtivo || loggedUser?.role === "admin") && (
+              <button
+                onClick={() => {
+                  window.location.href = "/precos"
+                }}
+                style={{
+                  flex: 1,
+                  minWidth: "140px",
+                  background: "#2563eb",
+                  marginTop: "0",
+                }}
+              >
+                📊 Preços
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -1945,11 +2075,12 @@ export default function Home() {
           )}
 
           {/* Navigation */}
-          <div style={{ display: "flex", gap: "10px" }}>
+          <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginTop: "15px" }}>
             <button
               onClick={() => setCurrentScreen("register")}
               style={{
                 flex: 1,
+                minWidth: "130px",
                 background: "#1a2a6c",
                 marginTop: "0",
               }}
@@ -1960,12 +2091,58 @@ export default function Home() {
               onClick={() => setCurrentScreen("settings")}
               style={{
                 flex: 1,
+                minWidth: "130px",
                 background: "#6c757d",
                 marginTop: "0",
               }}
             >
               ⚙️ Configurações
             </button>
+            {modulos.moduloConferenciaAtivo !== false && (
+              <button
+                onClick={() => {
+                  window.location.href = "/simples-conferencia"
+                }}
+                style={{
+                  flex: 1,
+                  minWidth: "140px",
+                  background: "#059669",
+                  marginTop: "0",
+                }}
+              >
+                ⚖️ Simples Conferência
+              </button>
+            )}
+            {(modulos.moduloEstoqueAtivo || loggedUser?.role === "admin") && (
+              <button
+                onClick={() => {
+                  window.location.href = "/gerenciador-estoque"
+                }}
+                style={{
+                  flex: 1,
+                  minWidth: "140px",
+                  background: "#4b5563",
+                  marginTop: "0",
+                }}
+              >
+                📦 Estoque
+              </button>
+            )}
+            {(modulos.moduloSeparacaoAtivo || loggedUser?.role === "admin") && (
+              <button
+                onClick={() => {
+                  window.location.href = "/separacao"
+                }}
+                style={{
+                  flex: 1,
+                  minWidth: "140px",
+                  background: "#d97706",
+                  marginTop: "0",
+                }}
+              >
+                📋 Separação
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -2146,11 +2323,12 @@ export default function Home() {
         )}
 
         {/* Navigation */}
-        <div style={{ display: "flex", gap: "10px", marginTop: "20px" }}>
+        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginTop: "20px" }}>
           <button
             onClick={() => setCurrentScreen("register")}
             style={{
               flex: 1,
+              minWidth: "130px",
               background: "#1a2a6c",
               marginTop: "0",
             }}
@@ -2164,12 +2342,43 @@ export default function Home() {
             }}
             style={{
               flex: 1,
+              minWidth: "130px",
               background: "#17a2b8",
               marginTop: "0",
             }}
           >
             📜 Histórico
           </button>
+          {modulos.moduloConferenciaAtivo !== false && (
+            <button
+              onClick={() => {
+                window.location.href = "/simples-conferencia"
+              }}
+              style={{
+                flex: 1,
+                minWidth: "140px",
+                background: "#059669",
+                marginTop: "0",
+              }}
+            >
+              ⚖️ Simples Conferência
+            </button>
+          )}
+          {(modulos.moduloEstoqueAtivo || loggedUser?.role === "admin") && (
+            <button
+              onClick={() => {
+                window.location.href = "/gerenciador-estoque"
+              }}
+              style={{
+                flex: 1,
+                minWidth: "140px",
+                background: "#4b5563",
+                marginTop: "0",
+              }}
+            >
+              📦 Estoque
+            </button>
+          )}
         </div>
       </div>
     </div>

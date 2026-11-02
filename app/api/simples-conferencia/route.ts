@@ -2,6 +2,9 @@ import { NextResponse } from "next/server"
 import { getSimplesConferencias, addSimplesConferencia } from "@/lib/conferencia"
 import { getSession } from "@/lib/auth"
 
+export const dynamic = "force-dynamic"
+export const revalidate = 0
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
@@ -37,6 +40,7 @@ export async function POST(request: Request) {
       taraCarrinhoKg: Number(body.taraCarrinhoKg || 0),
       tipoCaixaId: body.tipoCaixaId,
       tipoCaixaNome: body.tipoCaixaNome,
+      quantidadeCaixas: Math.max(1, Number(body.quantidadeCaixas) || 1),
       taraCaixaKg: Number(body.taraCaixaKg || 0),
       pesoLiquido: Number(body.pesoLiquido),
       observacao: body.observacao,

@@ -1,26 +1,7 @@
 "use client"
 
 import React, { useState, useEffect, useRef, useMemo } from "react"
-import { NavHeader } from "@/components/layout/nav-header"
-import {
-  Scale,
-  ArrowRight,
-  ShoppingCart,
-  Box,
-  Camera,
-  CheckCircle2,
-  FileSpreadsheet,
-  FileText,
-  Printer,
-  Search,
-  Plus,
-  RefreshCw,
-  Clock,
-  UserCheck,
-  AlertCircle,
-  Eye,
-  Sliders,
-} from "lucide-react"
+import Link from "next/link"
 
 interface Product {
   reduzido: string
@@ -47,6 +28,7 @@ interface ConferenciaRecord {
   taraCarrinhoKg: number
   tipoCaixaId?: string
   tipoCaixaNome?: string
+  quantidadeCaixas?: number
   taraCaixaKg: number
   pesoLiquido: number
   observacao?: string
@@ -55,12 +37,21 @@ interface ConferenciaRecord {
 }
 
 export default function SimplesConferenciaPage() {
-  const [user, setUser] = useState<{
+  const [loggedUser, setLoggedUser] = useState<{
     usuario: string
     nome?: string
     unidade?: string
     role?: string
   } | null>(null)
+  const [connectionStatus, setConnectionStatus] = useState("online")
+
+  const [modulos, setModulos] = useState({
+    moduloEstoqueAtivo: false,
+    moduloPerdasAtivo: true,
+    moduloConferenciaAtivo: true,
+    moduloSeparacaoAtivo: false,
+    moduloExcelAtivo: false,
+  })
 
   // Catálogos e Cadastros
   const [catalog, setCatalog] = useState<Product[]>([])
@@ -69,20 +60,20 @@ export default function SimplesConferenciaPage() {
   const [conferencias, setConferencias] = useState<ConferenciaRecord[]>([])
 
   // Formulário de Conferência
+  const [currentScreen, setCurrentScreen] = useState<"balanca" | "relatorio" | "taras">("balanca")
+  const [productInput, setProductInput] = useState("")
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
-  const [productSearch, setProductSearch] = useState("")
-  const [showCatalogDropdown, setShowCatalogDropdown] = useState(false)
+  const [filteredProducts, setFilteredProducts] = useState<Product[]>([])
   const [pesoBrutoInput, setPesoBrutoInput] = useState("")
   const [selectedCarrinhoId, setSelectedCarrinhoId] = useState<string>("")
   const [selectedCaixaId, setSelectedCaixaId] = useState<string>("")
+  const [quantidadeCaixasInput, setQuantidadeCaixasInput] = useState<string>("1")
   const [observacao, setObservacao] = useState("")
   const [photoPreview, setPhotoPreview] = useState<string>("")
   const [isSaving, setIsSaving] = useState(false)
-  const [saveSuccessMsg, setSaveSuccessMsg] = useState("")
-  const [saveErrorMsg, setSaveErrorMsg] = useState("")
+  const [statusMessage, setStatusMessage] = useState<{ text: string; type: "success" | "error" } | null>(null)
 
   // Filtros de Relatório
-  const [activeTab, setActiveTab] = useState<"balanca" | "relatorio" | "taras">("balanca")
   const [filtroTexto, setFiltroTexto] = useState("")
   const [filtroData, setFiltroData] = useState("")
 
@@ -92,25 +83,47 @@ export default function SimplesConferenciaPage() {
   const [novaCaixaNome, setNovaCaixaNome] = useState("")
   const [novaCaixaTara, setNovaCaixaTara] = useState("")
 
-  // Câmera
+  // Câmera / Arquivo
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const streamRef = useRef<MediaStream | null>(null)
+  const [cameraActive, setCameraActive] = useState(false)
 
-  // 1. Carregar Sessão
+  // 1. Status de Conexão, Sessão e Módulos
   useEffect(() => {
+    const handleOnline = () => setConnectionStatus("online")
+    const handleOffline = () => setConnectionStatus("offline")
+    window.addEventListener("online", handleOnline)
+    window.addEventListener("offline", handleOffline)
+
     fetch("/api/session")
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (data?.authenticated && data?.user) {
-          setUser(data.user)
+          setLoggedUser(data.user)
         }
       })
       .catch(() => {})
+
+    fetch("/api/modulos")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.modulos) {
+          setModulos((prev) => ({ ...prev, ...data.modulos }))
+        }
+      })
+      .catch(() => {})
+
+    return () => {
+      window.removeEventListener("online", handleOnline)
+      window.removeEventListener("offline", handleOffline)
+    }
   }, [])
 
-  // 2. Carregar Dados Iniciais
+  // 2. Carregar Dados do Banco
   const carregarDados = async () => {
     try {
-      // Produtos
       const resItens = await fetch("/api/estoque-itens")
       if (resItens.ok) {
         const itensData = await resItens.json()
@@ -124,21 +137,18 @@ export default function SimplesConferenciaPage() {
         setCatalog(itemsList)
       }
 
-      // Carrinhos
       const resCarrinhos = await fetch("/api/carrinhos-tara")
       if (resCarrinhos.ok) {
         const cData = await resCarrinhos.json()
         setCarrinhos(Array.isArray(cData?.carrinhos) ? cData.carrinhos : [])
       }
 
-      // Caixas
       const resCaixas = await fetch("/api/caixas-tara")
       if (resCaixas.ok) {
         const cxData = await resCaixas.json()
         setCaixas(Array.isArray(cxData?.caixas) ? cxData.caixas : [])
       }
 
-      // Histórico
       const resConf = await fetch("/api/simples-conferencia?limit=200")
       if (resConf.ok) {
         const confData = await resConf.json()
@@ -153,7 +163,31 @@ export default function SimplesConferenciaPage() {
     carregarDados()
   }, [])
 
-  // Cálculo de Tara e Peso Líquido
+  // Pesquisa de Produtos
+  const handleProductInput = (value: string) => {
+    setProductInput(value)
+    setSelectedProduct(null)
+    if (value.trim()) {
+      const term = value.toLowerCase()
+      const list = Array.isArray(catalog) ? catalog : []
+      const filtered = list.filter(
+        (p) =>
+          p.descricao.toLowerCase().includes(term) ||
+          p.reduzido.toString().includes(term)
+      )
+      setFilteredProducts(filtered.slice(0, 10))
+    } else {
+      setFilteredProducts([])
+    }
+  }
+
+  const selectProductItem = (p: Product) => {
+    setSelectedProduct(p)
+    setProductInput(p.descricao)
+    setFilteredProducts([])
+  }
+
+  // Cálculo de Tara e Peso Líquido com QUANTIDADE DE CAIXAS
   const selectedCarrinho = useMemo(
     () => (Array.isArray(carrinhos) ? carrinhos : []).find((c) => c.id === selectedCarrinhoId),
     [carrinhos, selectedCarrinhoId]
@@ -164,28 +198,56 @@ export default function SimplesConferenciaPage() {
   )
 
   const taraCarrinho = selectedCarrinho ? selectedCarrinho.taraKg : 0
-  const taraCaixa = selectedCaixa ? selectedCaixa.taraKg : 0
-  const taraTotal = Number((taraCarrinho + taraCaixa).toFixed(3))
+  const taraCaixaUnitaria = selectedCaixa ? selectedCaixa.taraKg : 0
+  const qtdCaixasNum = selectedCaixaId ? Math.max(1, parseInt(quantidadeCaixasInput, 10) || 1) : 0
+  const taraCaixasTotal = Number((taraCaixaUnitaria * qtdCaixasNum).toFixed(3))
+  const taraTotal = Number((taraCarrinho + taraCaixasTotal).toFixed(3))
 
   const pesoBrutoNum = parseFloat(pesoBrutoInput.replace(",", ".")) || 0
   const pesoLiquidoNum = Math.max(0, Number((pesoBrutoNum - taraTotal).toFixed(3)))
 
-  // Filtro de produtos
-  const filteredProducts = useMemo(() => {
-    const list = Array.isArray(catalog) ? catalog : []
-    if (!productSearch) return list.slice(0, 15)
-    const term = productSearch.toLowerCase()
-    return list
-      .filter(
-        (p) =>
-          p?.descricao?.toLowerCase().includes(term) ||
-          p?.reduzido?.toString().includes(term)
-      )
-      .slice(0, 20)
-  }, [catalog, productSearch])
+  // Câmera nativa
+  const startCamera = async () => {
+    try {
+      setCameraActive(true)
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "environment" },
+      })
+      streamRef.current = stream
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream
+      }
+    } catch (err) {
+      console.error("Erro câmera:", err)
+      alert("Não foi possível acessar a câmera. Use o upload de arquivo.")
+      setCameraActive(false)
+    }
+  }
 
-  // Foto / Câmera
-  const handlePhotoCapture = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const stopCamera = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop())
+      streamRef.current = null
+    }
+    setCameraActive(false)
+  }
+
+  const capturePhoto = () => {
+    if (!videoRef.current || !canvasRef.current) return
+    const video = videoRef.current
+    const canvas = canvasRef.current
+    canvas.width = video.videoWidth || 640
+    canvas.height = video.videoHeight || 480
+    const ctx = canvas.getContext("2d")
+    if (ctx) {
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+      const dataUrl = canvas.toDataURL("image/jpeg", 0.8)
+      setPhotoPreview(dataUrl)
+    }
+    stopCamera()
+  }
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
       const reader = new FileReader()
@@ -196,17 +258,23 @@ export default function SimplesConferenciaPage() {
     }
   }
 
-  // Salvar Conferência
-  const handleSalvarConferencia = async () => {
-    setSaveErrorMsg("")
-    setSaveSuccessMsg("")
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/logout", { method: "POST" })
+      window.location.href = "/"
+    } catch {
+      window.location.reload()
+    }
+  }
 
-    if (!selectedProduct && !productSearch.trim()) {
-      setSaveErrorMsg("Selecione ou informe a descrição do produto.")
+  // Salvar Simples Conferência
+  const handleSalvarConferencia = async () => {
+    if (!productInput.trim()) {
+      setStatusMessage({ text: "Selecione ou digite o nome do produto.", type: "error" })
       return
     }
     if (pesoBrutoNum <= 0) {
-      setSaveErrorMsg("Informe um peso bruto válido maior que zero.")
+      setStatusMessage({ text: "Informe um peso bruto válido maior que zero.", type: "error" })
       return
     }
 
@@ -214,15 +282,16 @@ export default function SimplesConferenciaPage() {
     try {
       const payload = {
         produtoReduzido: selectedProduct?.reduzido || "",
-        produtoNome: selectedProduct?.descricao || productSearch.trim(),
-        responsavel: user?.nome || user?.usuario || "Operador Balança",
+        produtoNome: productInput.trim(),
+        responsavel: loggedUser?.nome || loggedUser?.usuario || "Operador Balança",
         pesoBruto: pesoBrutoNum,
         tipoCarrinhoId: selectedCarrinho?.id || "",
         tipoCarrinhoNome: selectedCarrinho?.nome || "",
         taraCarrinhoKg: taraCarrinho,
         tipoCaixaId: selectedCaixa?.id || "",
         tipoCaixaNome: selectedCaixa?.nome || "",
-        taraCaixaKg: taraCaixa,
+        quantidadeCaixas: qtdCaixasNum,
+        taraCaixaKg: taraCaixasTotal,
         pesoLiquido: pesoLiquidoNum,
         observacao: observacao.trim(),
         fotoUrl: photoPreview || "",
@@ -239,24 +308,26 @@ export default function SimplesConferenciaPage() {
         throw new Error(data.error || "Erro ao registrar simples conferência.")
       }
 
-      setSaveSuccessMsg(
-        `Conferência registrada: ${pesoBrutoNum.toFixed(2)} kg → ${pesoLiquidoNum.toFixed(2)} kg`
-      )
-      setConferencias((prev) => [data.item, ...prev])
+      const infoCaixa = qtdCaixasNum > 0 ? ` (${qtdCaixasNum} cx)` : ""
+      setStatusMessage({
+        text: `Conferência registrada com sucesso: ${pesoBrutoNum.toFixed(2)} kg → ${pesoLiquidoNum.toFixed(2)} kg${infoCaixa}`,
+        type: "success",
+      })
 
-      // Limpar formulário para próxima pesagem rápida
+      setConferencias((prev) => [data.item, ...(Array.isArray(prev) ? prev : [])])
+
+      // Limpa dados mantendo carrinho para a próxima pesagem rápida
       setPesoBrutoInput("")
       setObservacao("")
       setPhotoPreview("")
-      // Mantém carrinho/caixa selecionados se operador estiver pesando lote contínuo
     } catch (err: any) {
-      setSaveErrorMsg(err.message || "Falha ao registrar pesagem.")
+      setStatusMessage({ text: err.message || "Falha ao registrar pesagem.", type: "error" })
     } finally {
       setIsSaving(false)
     }
   }
 
-  // Cadastro de Novo Carrinho
+  // Adicionar Carrinho (Admin)
   const handleCriarCarrinho = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!novoCarrinhoNome || !novoCarrinhoTara) return
@@ -271,7 +342,7 @@ export default function SimplesConferenciaPage() {
       })
       if (res.ok) {
         const data = await res.json()
-        setCarrinhos(data.carrinhos)
+        setCarrinhos(Array.isArray(data.carrinhos) ? data.carrinhos : [])
         setNovoCarrinhoNome("")
         setNovoCarrinhoTara("")
       }
@@ -280,7 +351,7 @@ export default function SimplesConferenciaPage() {
     }
   }
 
-  // Cadastro de Nova Caixa
+  // Adicionar Caixa (Admin)
   const handleCriarCaixa = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!novaCaixaNome || !novaCaixaTara) return
@@ -295,7 +366,7 @@ export default function SimplesConferenciaPage() {
       })
       if (res.ok) {
         const data = await res.json()
-        setCaixas(data.caixas)
+        setCaixas(Array.isArray(data.caixas) ? data.caixas : [])
         setNovaCaixaNome("")
         setNovaCaixaTara("")
       }
@@ -327,20 +398,22 @@ export default function SimplesConferenciaPage() {
       "Carrinho",
       "Tara Carrinho (kg)",
       "Caixa",
-      "Tara Caixa (kg)",
+      "Qtd Caixas",
+      "Tara Caixas Total (kg)",
       "Peso Líquido (kg)",
       "Data e Hora",
     ]
     const rows = relatorioFiltrado.map((c) => [
       c.id,
-      `"${c.produtoNome.replace(/"/g, '""')}"`,
-      `"${c.responsavel.replace(/"/g, '""')}"`,
-      c.pesoBruto.toFixed(3),
+      `"${(c.produtoNome || "").replace(/"/g, '""')}"`,
+      `"${(c.responsavel || "").replace(/"/g, '""')}"`,
+      (c.pesoBruto || 0).toFixed(3),
       `"${c.tipoCarrinhoNome || "Nenhum"}"`,
-      c.taraCarrinhoKg.toFixed(3),
+      (c.taraCarrinhoKg || 0).toFixed(3),
       `"${c.tipoCaixaNome || "Nenhuma"}"`,
-      c.taraCaixaKg.toFixed(3),
-      c.pesoLiquido.toFixed(3),
+      c.quantidadeCaixas || 1,
+      (c.taraCaixaKg || 0).toFixed(3),
+      (c.pesoLiquido || 0).toFixed(3),
       new Date(c.createdAt).toLocaleString("pt-BR"),
     ])
     const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map((r) => r.join(","))].join("\n")
@@ -354,547 +427,1025 @@ export default function SimplesConferenciaPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-800 flex flex-col font-sans">
-      <NavHeader user={user} />
-
-      <main className="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-6 space-y-6">
-        {/* Top Header & Tabs */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-slate-200">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="p-2 bg-emerald-100 text-emerald-800 rounded-xl">
-                <Scale className="w-6 h-6" />
-              </span>
-              <div>
-                <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-                  Simples Conferência & Pesagem
-                </h1>
-                <p className="text-xs sm:text-sm text-slate-500">
-                  Cálculo automático de tara (carrinho + caixa) sem movimentar estoque nem registrar perdas.
-                </p>
-              </div>
-            </div>
+    <div className="marca-foto-container">
+      <div className="container">
+        {/* CABEÇALHO IDÊNTICO AO CONTROLE DE PERDAS */}
+        <header>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              gap: "12px",
+              marginBottom: "6px",
+            }}
+          >
+            <img
+              src="/images/maia-logo.jpg"
+              alt="Maia Hortifrutigranjeiros"
+              style={{
+                width: "56px",
+                height: "56px",
+                borderRadius: "50%",
+                objectFit: "cover",
+                border: "2px solid #5c4632",
+                boxShadow: "0 4px 10px rgba(0,0,0,0.15)",
+              }}
+            />
+            <h1 style={{ margin: 0, color: "#1a2a6c" }}>Simples Conferência — Hortigranjeiros</h1>
           </div>
 
-          <div className="flex items-center gap-2 bg-slate-100 p-1.5 rounded-xl border border-slate-200 self-start sm:self-center">
-            <button
-              onClick={() => setActiveTab("balanca")}
-              className={`px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all flex items-center gap-2 ${
-                activeTab === "balanca"
-                  ? "bg-[#1a2a6c] text-white shadow"
-                  : "text-slate-600 hover:text-slate-900"
-              }`}
-            >
-              <Scale className="w-4 h-4" />
-              Balança Operacional
-            </button>
-            <button
-              onClick={() => setActiveTab("relatorio")}
-              className={`px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all flex items-center gap-2 ${
-                activeTab === "relatorio"
-                  ? "bg-[#1a2a6c] text-white shadow"
-                  : "text-slate-600 hover:text-slate-900"
-              }`}
-            >
-              <FileText className="w-4 h-4" />
-              Relatório ({conferencias.length})
-            </button>
-            {user?.role === "admin" && (
-              <button
-                onClick={() => setActiveTab("taras")}
-                className={`px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all flex items-center gap-2 ${
-                  activeTab === "taras"
-                    ? "bg-[#1a2a6c] text-white shadow"
-                    : "text-slate-600 hover:text-slate-900"
-                }`}
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              gap: "10px",
+              marginTop: "6px",
+              flexWrap: "wrap",
+            }}
+          >
+            <span style={{ fontSize: "14px", color: "#666" }}>
+              {connectionStatus === "online" ? "🟢 Online" : "🔴 Offline"}
+            </span>
+
+            {loggedUser && (
+              <span style={{ fontSize: "13px", color: "#1a2a6c", fontWeight: 700 }}>
+                👤 {loggedUser.nome || loggedUser.usuario} ({loggedUser.unidade?.toUpperCase() || "FILIAL"})
+              </span>
+            )}
+
+            {loggedUser?.role === "admin" && (
+              <Link
+                href="/admin"
+                style={{
+                  color: "#ffffff",
+                  background: "#1a2a6c",
+                  fontWeight: 700,
+                  fontSize: "12px",
+                  padding: "5px 12px",
+                  borderRadius: "6px",
+                  textDecoration: "none",
+                  boxShadow: "0 2px 6px rgba(26,42,108,0.2)",
+                }}
               >
-                <Sliders className="w-4 h-4" />
-                Cadastrar Taras
+                ⚙️ Painel Admin
+              </Link>
+            )}
+
+            <Link
+              href="/"
+              style={{
+                color: "#ffffff",
+                background: "#b21f1f",
+                fontWeight: 700,
+                fontSize: "12px",
+                padding: "5px 12px",
+                borderRadius: "6px",
+                textDecoration: "none",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "4px",
+                boxShadow: "0 2px 6px rgba(178,31,31,0.2)",
+              }}
+            >
+              ⚠️ Controle de Perdas
+            </Link>
+
+            {(modulos.moduloEstoqueAtivo || loggedUser?.role === "admin") && (
+              <Link
+                href="/gerenciador-estoque"
+                style={{
+                  color: "#ffffff",
+                  background: "#4b5563",
+                  fontWeight: 700,
+                  fontSize: "12px",
+                  padding: "5px 12px",
+                  borderRadius: "6px",
+                  textDecoration: "none",
+                  boxShadow: "0 2px 6px rgba(75,85,99,0.2)",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "4px",
+                }}
+              >
+                📦 Gerenciador de Estoque
+              </Link>
+            )}
+
+            {(modulos.moduloSeparacaoAtivo || loggedUser?.role === "admin") && (
+              <Link
+                href="/separacao"
+                style={{
+                  color: "#ffffff",
+                  background: "#d97706",
+                  fontWeight: 700,
+                  fontSize: "12px",
+                  padding: "5px 12px",
+                  borderRadius: "6px",
+                  textDecoration: "none",
+                  boxShadow: "0 2px 6px rgba(217,119,6,0.2)",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "4px",
+                }}
+              >
+                📋 Separação de Pedidos
+              </Link>
+            )}
+
+            {(modulos.moduloExcelAtivo || loggedUser?.role === "admin") && (
+              <Link
+                href="/precos"
+                style={{
+                  color: "#ffffff",
+                  background: "#2563eb",
+                  fontWeight: 700,
+                  fontSize: "12px",
+                  padding: "5px 12px",
+                  borderRadius: "6px",
+                  textDecoration: "none",
+                  boxShadow: "0 2px 6px rgba(37,99,235,0.2)",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "4px",
+                }}
+              >
+                📊 Atualização de Preços
+              </Link>
+            )}
+
+            <Link
+              href="/termos"
+              style={{
+                color: "#1a2a6c",
+                border: "1px solid #cbd5e1",
+                background: "#ffffff",
+                fontWeight: 700,
+                fontSize: "12px",
+                padding: "5px 10px",
+                borderRadius: "6px",
+                textDecoration: "none",
+              }}
+            >
+              📄 Termos
+            </Link>
+
+            {loggedUser && (
+              <button
+                type="button"
+                onClick={handleLogout}
+                style={{
+                  background: "#dc3545",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "6px",
+                  padding: "4px 10px",
+                  fontSize: "12px",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  marginTop: 0,
+                  width: "auto",
+                }}
+              >
+                🚪 Sair
               </button>
             )}
           </div>
+        </header>
+
+        {/* NAVEGAÇÃO SUPERIOR DE ABAS (PADRÃO VISUAL DE PERDAS) */}
+        <div style={{ display: "flex", gap: "10px", marginBottom: "20px" }}>
+          <button
+            type="button"
+            onClick={() => setCurrentScreen("balanca")}
+            style={{
+              flex: 1,
+              background:
+                currentScreen === "balanca"
+                  ? "linear-gradient(to right, #1a2a6c, #b21f1f)"
+                  : "#e9ecef",
+              color: currentScreen === "balanca" ? "white" : "#1a2a6c",
+              fontWeight: "bold",
+              padding: "12px",
+              borderRadius: "10px",
+              border: currentScreen === "balanca" ? "none" : "1px solid #cbd5e1",
+              cursor: "pointer",
+              marginTop: 0,
+            }}
+          >
+            ⚖️ Balança Operacional
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setCurrentScreen("relatorio")}
+            style={{
+              flex: 1,
+              background:
+                currentScreen === "relatorio"
+                  ? "linear-gradient(to right, #1a2a6c, #b21f1f)"
+                  : "#e9ecef",
+              color: currentScreen === "relatorio" ? "white" : "#1a2a6c",
+              fontWeight: "bold",
+              padding: "12px",
+              borderRadius: "10px",
+              border: currentScreen === "relatorio" ? "none" : "1px solid #cbd5e1",
+              cursor: "pointer",
+              marginTop: 0,
+            }}
+          >
+            📜 Relatório de Conferências ({conferencias.length})
+          </button>
+
+          {loggedUser?.role === "admin" && (
+            <button
+              type="button"
+              onClick={() => setCurrentScreen("taras")}
+              style={{
+                flex: 1,
+                background:
+                  currentScreen === "taras"
+                    ? "linear-gradient(to right, #1a2a6c, #b21f1f)"
+                    : "#e9ecef",
+                color: currentScreen === "taras" ? "white" : "#1a2a6c",
+                fontWeight: "bold",
+                padding: "12px",
+                borderRadius: "10px",
+                border: currentScreen === "taras" ? "none" : "1px solid #cbd5e1",
+                cursor: "pointer",
+                marginTop: 0,
+              }}
+            >
+              ⚙️ Cadastrar Taras
+            </button>
+          )}
         </div>
 
-        {/* FEEDBACK MESSAGES */}
-        {saveSuccessMsg && (
-          <div className="bg-emerald-50 border-2 border-emerald-500/50 p-4 rounded-2xl flex items-center gap-3 text-emerald-900 animate-fadeIn">
-            <CheckCircle2 className="w-6 h-6 text-emerald-600 shrink-0" />
-            <div className="font-bold text-sm sm:text-base">{saveSuccessMsg}</div>
-          </div>
-        )}
-        {saveErrorMsg && (
-          <div className="bg-rose-50 border-2 border-rose-500/50 p-4 rounded-2xl flex items-center gap-3 text-rose-900 animate-fadeIn">
-            <AlertCircle className="w-6 h-6 text-rose-600 shrink-0" />
-            <div className="font-bold text-sm sm:text-base">{saveErrorMsg}</div>
+        {/* MENSAGEM DE STATUS */}
+        {statusMessage && (
+          <div className={`status ${statusMessage.type}`} style={{ display: "block" }}>
+            {statusMessage.text}
           </div>
         )}
 
-        {/* ABA 1: BALANÇA OPERACIONAL (Tablet Friendly) */}
-        {activeTab === "balanca" && (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            {/* Lado Esquerdo: Formulário de Pesagem */}
-            <div className="lg:col-span-7 bg-white p-5 sm:p-8 rounded-2xl shadow-sm border border-slate-200 space-y-6">
-              {/* Passo 1: Selecionar Produto */}
-              <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
-                  <span className="w-5 h-5 rounded-full bg-slate-900 text-white text-[10px] flex items-center justify-center font-black">
-                    1
-                  </span>
-                  Selecionar Produto
-                </label>
-                <div className="relative">
-                  <div className="flex items-center gap-2 border-2 border-slate-300 rounded-xl px-3 py-2.5 focus-within:border-[#1a2a6c] bg-white transition-colors">
-                    <Search className="w-5 h-5 text-slate-400" />
-                    <input
-                      type="text"
-                      value={selectedProduct ? selectedProduct.descricao : productSearch}
-                      onChange={(e) => {
-                        setSelectedProduct(null)
-                        setProductSearch(e.target.value)
-                        setShowCatalogDropdown(true)
-                      }}
-                      onFocus={() => setShowCatalogDropdown(true)}
-                      placeholder="Digite o código ou nome do produto..."
-                      className="w-full text-base font-semibold text-slate-900 outline-none"
-                    />
-                    {selectedProduct && (
-                      <button
-                        onClick={() => {
-                          setSelectedProduct(null)
-                          setProductSearch("")
-                        }}
-                        className="text-xs font-bold text-slate-400 hover:text-slate-700 bg-slate-100 px-2 py-1 rounded-md"
-                      >
-                        Limpar
-                      </button>
-                    )}
-                  </div>
-
-                  {/* Dropdown de Produtos */}
-                  {showCatalogDropdown && !selectedProduct && (
-                    <div className="absolute z-30 left-0 right-0 mt-1 max-h-64 overflow-y-auto bg-white border border-slate-300 rounded-xl shadow-xl divide-y divide-slate-100">
-                      {filteredProducts.map((p) => (
-                        <button
-                          key={p.reduzido}
-                          type="button"
-                          onClick={() => {
-                            setSelectedProduct(p)
-                            setShowCatalogDropdown(false)
-                          }}
-                          className="w-full text-left px-4 py-3 hover:bg-slate-50 flex items-center justify-between text-sm"
-                        >
-                          <span className="font-bold text-slate-900">{p.descricao}</span>
-                          <span className="text-xs bg-slate-100 px-2 py-1 rounded text-slate-600 font-mono">
-                            Cód {p.reduzido}
-                          </span>
-                        </button>
-                      ))}
-                      {filteredProducts.length === 0 && (
-                        <div className="p-4 text-center text-sm text-slate-400">
-                          Nenhum produto cadastrado com esse nome. O texto digitado será utilizado.
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Passo 2: Peso Bruto (Visor de Balança) */}
-              <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
-                  <span className="w-5 h-5 rounded-full bg-slate-900 text-white text-[10px] flex items-center justify-center font-black">
-                    2
-                  </span>
-                  Peso Bruto na Balança (kg)
-                </label>
-                <div className="flex items-center gap-3">
-                  <div className="relative flex-1">
-                    <input
-                      type="text"
-                      inputMode="decimal"
-                      value={pesoBrutoInput}
-                      onChange={(e) => setPesoBrutoInput(e.target.value)}
-                      placeholder="0.00"
-                      className="w-full text-3xl sm:text-4xl font-black text-slate-900 px-4 py-3 border-2 border-slate-300 rounded-xl focus:border-[#1a2a6c] outline-none font-mono tracking-tight bg-slate-50/50"
-                    />
-                    <span className="absolute right-4 top-1/2 -translate-y-1/2 font-bold text-slate-400 text-lg">
-                      KG
-                    </span>
-                  </div>
-                </div>
-
-                {/* Atalhos de Peso Rápido (Tablet Touch) */}
-                <div className="flex flex-wrap gap-1.5 pt-1">
-                  {["10", "15", "20", "25", "30", "38", "50"].map((quick) => (
-                    <button
-                      key={quick}
-                      type="button"
-                      onClick={() => setPesoBrutoInput(quick)}
-                      className="px-2.5 py-1 text-xs font-bold rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200"
-                    >
-                      {quick} kg
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Passo 3: Selecionar Carrinho Utilizado */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
-                    <ShoppingCart className="w-4 h-4 text-slate-600" />
-                    Carrinho Utilizado (Desconto de Tara)
-                  </label>
-                  {selectedCarrinho && (
-                    <span className="text-xs font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">
-                      - {selectedCarrinho.taraKg.toFixed(2)} kg
-                    </span>
-                  )}
-                </div>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setSelectedCarrinhoId("")}
-                    className={`p-3 rounded-xl border-2 text-left font-bold text-xs transition-all flex flex-col justify-between h-18 ${
-                      selectedCarrinhoId === ""
-                        ? "border-[#1a2a6c] bg-blue-50 text-[#1a2a6c]"
-                        : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
-                    }`}
-                  >
-                    <span>Nenhum</span>
-                    <span className="text-[10px] text-slate-400">0,00 kg</span>
-                  </button>
-                  {carrinhos.map((c) => (
-                    <button
-                      key={c.id}
-                      type="button"
-                      onClick={() => setSelectedCarrinhoId(c.id)}
-                      className={`p-3 rounded-xl border-2 text-left font-bold text-xs transition-all flex flex-col justify-between h-18 ${
-                        selectedCarrinhoId === c.id
-                          ? "border-[#1a2a6c] bg-blue-50 text-[#1a2a6c]"
-                          : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
-                      }`}
-                    >
-                      <span className="truncate">{c.nome}</span>
-                      <span className="text-[11px] font-mono text-slate-900 bg-white/80 px-1.5 py-0.5 rounded border border-slate-200 self-start">
-                        {c.taraKg.toFixed(2)} kg
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Passo 4: Selecionar Caixa Utilizada */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
-                    <Box className="w-4 h-4 text-slate-600" />
-                    Caixa Utilizada (Desconto de Tara)
-                  </label>
-                  {selectedCaixa && (
-                    <span className="text-xs font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
-                      - {selectedCaixa.taraKg.toFixed(2)} kg
-                    </span>
-                  )}
-                </div>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setSelectedCaixaId("")}
-                    className={`p-3 rounded-xl border-2 text-left font-bold text-xs transition-all flex flex-col justify-between h-18 ${
-                      selectedCaixaId === ""
-                        ? "border-[#1a2a6c] bg-amber-50 text-amber-900"
-                        : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
-                    }`}
-                  >
-                    <span>Nenhuma</span>
-                    <span className="text-[10px] text-slate-400">0,00 kg</span>
-                  </button>
-                  {caixas.map((cx) => (
-                    <button
-                      key={cx.id}
-                      type="button"
-                      onClick={() => setSelectedCaixaId(cx.id)}
-                      className={`p-3 rounded-xl border-2 text-left font-bold text-xs transition-all flex flex-col justify-between h-18 ${
-                        selectedCaixaId === cx.id
-                          ? "border-[#1a2a6c] bg-amber-50 text-amber-900"
-                          : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
-                      }`}
-                    >
-                      <span className="truncate">{cx.nome}</span>
-                      <span className="text-[11px] font-mono text-slate-900 bg-white/80 px-1.5 py-0.5 rounded border border-slate-200 self-start">
-                        {cx.taraKg.toFixed(2)} kg
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Observações e Evidência */}
-              <div className="space-y-2 pt-2 border-t border-slate-100">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                    Observações & Foto (Opcional)
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1"
-                  >
-                    <Camera className="w-3.5 h-3.5" />
-                    {photoPreview ? "Trocar Foto" : "Anexar Evidência"}
-                  </button>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    capture="environment"
-                    className="hidden"
-                    onChange={handlePhotoCapture}
-                  />
-                </div>
+        {/* ========================================================= */}
+        {/* TELA 1: BALANÇA OPERACIONAL (Cálculo Bruto -> Líquido)    */}
+        {/* ========================================================= */}
+        {currentScreen === "balanca" && (
+          <>
+            {/* Bloco 1: Selecionar Produto */}
+            <div
+              style={{
+                marginBottom: "20px",
+                padding: "15px",
+                background: "rgba(26, 42, 108, 0.05)",
+                borderRadius: "10px",
+              }}
+            >
+              <label style={{ color: "#1a2a6c", marginTop: 0 }}>🧾 Selecionar Produto (Hortigranjeiros):</label>
+              <div style={{ position: "relative", marginTop: "10px" }}>
                 <input
                   type="text"
-                  value={observacao}
-                  onChange={(e) => setObservacao(e.target.value)}
-                  placeholder="Ex: Lote 4B, produto com umidade alta, conferido no recebimento..."
-                  className="w-full text-sm px-3 py-2.5 border border-slate-200 rounded-xl outline-none focus:border-[#1a2a6c]"
+                  placeholder="Digite o nome ou código do produto (ex: Tomate, Laranja, Batata)..."
+                  value={productInput}
+                  onChange={(e) => handleProductInput(e.target.value)}
+                  style={{ marginBottom: "0" }}
                 />
-                {photoPreview && (
-                  <div className="relative inline-block mt-2">
-                    <img
-                      src={photoPreview}
-                      alt="Evidência"
-                      className="w-24 h-24 object-cover rounded-xl border-2 border-emerald-500 shadow-sm"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setPhotoPreview("")}
-                      className="absolute -top-2 -right-2 bg-rose-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-black shadow"
-                    >
-                      ×
-                    </button>
+
+                {filteredProducts.length > 0 && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: "100%",
+                      left: "0",
+                      right: "0",
+                      background: "white",
+                      border: "1px solid #ccc",
+                      borderRadius: "8px",
+                      maxHeight: "200px",
+                      overflowY: "auto",
+                      zIndex: 1000,
+                      boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
+                    }}
+                  >
+                    {filteredProducts.map((product) => (
+                      <div
+                        key={product.reduzido}
+                        onClick={() => selectProductItem(product)}
+                        style={{
+                          padding: "10px",
+                          cursor: "pointer",
+                          borderBottom: "1px solid #eee",
+                          display: "flex",
+                          justifyContent: "space-between",
+                          fontSize: "14px",
+                        }}
+                        onMouseEnter={(e) => (e.currentTarget.style.background = "#f0f0f0")}
+                        onMouseLeave={(e) => (e.currentTarget.style.background = "white")}
+                      >
+                        <span style={{ fontWeight: 600 }}>{product.descricao}</span>
+                        <span style={{ color: "#666", fontSize: "12px" }}>Cód: {product.reduzido}</span>
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>
             </div>
 
-            {/* Lado Direito: VISOR DE CÁLCULO E CONFIRMAÇÃO */}
-            <div className="lg:col-span-5 flex flex-col gap-6">
-              {/* O Grande Painel Indicativo: Bruto → Líquido */}
-              <div className="bg-gradient-to-br from-[#1a2a6c] to-[#2745a3] text-white p-6 sm:p-8 rounded-2xl shadow-xl flex flex-col justify-between border-4 border-amber-400/30">
-                <div>
-                  <div className="text-[11px] font-black uppercase tracking-widest text-amber-300 mb-2 flex items-center gap-2">
-                    <Scale className="w-4 h-4" />
-                    Cálculo Automático de Tara
-                  </div>
-                  <h3 className="text-lg font-bold text-white mb-6">
-                    {selectedProduct ? selectedProduct.descricao : productSearch || "Selecione o Produto"}
-                  </h3>
-
-                  {/* VISUAL INDICATIVO BRUTO -> LÍQUIDO */}
-                  <div className="bg-white/10 p-5 rounded-2xl border border-white/20 space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <div className="text-[11px] uppercase font-bold text-blue-200">Peso Bruto</div>
-                        <div className="text-3xl font-black font-mono text-white">
-                          {pesoBrutoNum > 0 ? pesoBrutoNum.toFixed(2) : "0,00"}{" "}
-                          <span className="text-sm font-normal text-blue-200">kg</span>
-                        </div>
-                      </div>
-
-                      <div className="p-2.5 bg-amber-400 text-slate-950 rounded-full shadow-lg">
-                        <ArrowRight className="w-6 h-6 stroke-[3]" />
-                      </div>
-
-                      <div className="text-right">
-                        <div className="text-[11px] uppercase font-bold text-amber-300">
-                          Peso Líquido
-                        </div>
-                        <div className="text-3xl sm:text-4xl font-black font-mono text-amber-300">
-                          {pesoLiquidoNum > 0 ? pesoLiquidoNum.toFixed(2) : "0,00"}{" "}
-                          <span className="text-sm font-normal text-amber-200">kg</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Breakdown de Taras */}
-                    <div className="pt-3 border-t border-white/15 text-xs text-blue-100 space-y-1">
-                      <div className="flex justify-between">
-                        <span>Carrinho ({selectedCarrinho?.nome || "Nenhum"}):</span>
-                        <span className="font-mono font-bold">
-                          {taraCarrinho > 0 ? `-${taraCarrinho.toFixed(2)} kg` : "0,00 kg"}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Caixa ({selectedCaixa?.nome || "Nenhuma"}):</span>
-                        <span className="font-mono font-bold">
-                          {taraCaixa > 0 ? `-${taraCaixa.toFixed(2)} kg` : "0,00 kg"}
-                        </span>
-                      </div>
-                      <div className="flex justify-between font-bold text-amber-300 pt-1 border-t border-white/10">
-                        <span>Desconto Total da Tara:</span>
-                        <span className="font-mono">-{taraTotal.toFixed(2)} kg</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* BOTÃO CONFIRMAR E SALVAR */}
-                <div className="mt-8 space-y-3">
-                  <button
-                    type="button"
-                    disabled={isSaving || pesoBrutoNum <= 0}
-                    onClick={handleSalvarConferencia}
-                    className={`w-full py-4 px-6 rounded-2xl font-black text-base sm:text-lg uppercase tracking-wider shadow-2xl transition-all flex items-center justify-center gap-3 ${
-                      pesoBrutoNum > 0 && !isSaving
-                        ? "bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white hover:scale-[1.02] cursor-pointer"
-                        : "bg-slate-700 text-slate-400 cursor-not-allowed"
-                    }`}
-                  >
-                    {isSaving ? (
-                      <>
-                        <RefreshCw className="w-6 h-6 animate-spin" />
-                        Registrando Pesagem...
-                      </>
-                    ) : (
-                      <>
-                        <CheckCircle2 className="w-6 h-6" />
-                        Confirmar e Salvar Conferência
-                      </>
-                    )}
-                  </button>
-
-                  <div className="text-center text-xs text-blue-200 flex items-center justify-center gap-2">
-                    <UserCheck className="w-3.5 h-3.5" />
-                    Responsável: {user?.nome || user?.usuario || "Operador Balança"}
-                  </div>
-                </div>
+            {/* Bloco 2: Peso Bruto na Balança */}
+            <div
+              style={{
+                marginBottom: "20px",
+                padding: "15px",
+                background: "rgba(26, 42, 108, 0.05)",
+                borderRadius: "10px",
+              }}
+            >
+              <label style={{ color: "#1a2a6c", marginTop: 0 }}>⚖️ Peso Bruto Registrado na Balança (kg):</label>
+              <div style={{ display: "flex", gap: "10px", marginTop: "10px", alignItems: "center" }}>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  placeholder="Ex: 38.00 ou 15.5"
+                  value={pesoBrutoInput}
+                  onChange={(e) => setPesoBrutoInput(e.target.value)}
+                  style={{
+                    fontSize: "24px",
+                    fontWeight: "bold",
+                    color: "#1a2a6c",
+                    flex: 1,
+                    marginBottom: 0,
+                  }}
+                />
               </div>
 
-              {/* Informação Operacional */}
-              <div className="bg-slate-100 p-4 rounded-xl border border-slate-200 text-xs text-slate-600 space-y-1">
-                <div className="font-bold text-slate-800">Regra de Integridade:</div>
-                <div>• Registros de Simples Conferência não afetam saldos de estoque.</div>
-                <div>• Os valores de tara salvos ficam imutáveis no histórico original.</div>
+              {/* Atalhos Rápidos de Peso */}
+              <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginTop: "10px" }}>
+                {["10", "15", "20", "25", "30", "38", "50", "100"].map((quick) => (
+                  <button
+                    key={quick}
+                    type="button"
+                    onClick={() => setPesoBrutoInput(quick)}
+                    style={{
+                      width: "auto",
+                      background: "#e9ecef",
+                      color: "#1a2a6c",
+                      border: "1px solid #ccc",
+                      padding: "6px 12px",
+                      borderRadius: "6px",
+                      fontSize: "12px",
+                      fontWeight: "bold",
+                      marginTop: 0,
+                    }}
+                  >
+                    {quick} kg
+                  </button>
+                ))}
               </div>
             </div>
-          </div>
-        )}
 
-        {/* ABA 2: RELATÓRIO DE SIMPLES CONFERÊNCIA */}
-        {activeTab === "relatorio" && (
-          <div className="bg-white p-5 sm:p-8 rounded-2xl shadow-sm border border-slate-200 space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div>
-                <h2 className="text-lg font-black text-slate-900">
-                  Relatório Organizacional de Conferências
-                </h2>
-                <p className="text-xs text-slate-500">
-                  Histórico completo com tara do carrinho, tara da caixa e indicador Bruto → Líquido.
-                </p>
+            {/* Bloco 3: Seleção de Carrinho Utilizado */}
+            <div style={{ marginBottom: "20px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <label style={{ margin: 0, color: "#1a2a6c" }}>🛒 Carrinho Utilizado (Desconto de Tara):</label>
+                {selectedCarrinho && (
+                  <span style={{ fontSize: "12px", fontWeight: "bold", color: "#1a2a6c" }}>
+                    Desconto: -{selectedCarrinho.taraKg.toFixed(2)} kg
+                  </span>
+                )}
+              </div>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
+                  gap: "10px",
+                  marginTop: "10px",
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={() => setSelectedCarrinhoId("")}
+                  style={{
+                    background: selectedCarrinhoId === "" ? "#1a2a6c" : "#e9ecef",
+                    color: selectedCarrinhoId === "" ? "white" : "#333",
+                    border: selectedCarrinhoId === "" ? "2px solid #1a2a6c" : "2px solid transparent",
+                    padding: "12px",
+                    borderRadius: "10px",
+                    cursor: "pointer",
+                    fontWeight: "bold",
+                    marginTop: 0,
+                  }}
+                >
+                  Nenhum (0 kg)
+                </button>
+                {carrinhos.map((c) => (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => setSelectedCarrinhoId(c.id)}
+                    style={{
+                      background: selectedCarrinhoId === c.id ? "#1a2a6c" : "#e9ecef",
+                      color: selectedCarrinhoId === c.id ? "white" : "#333",
+                      border: selectedCarrinhoId === c.id ? "2px solid #1a2a6c" : "2px solid transparent",
+                      padding: "12px",
+                      borderRadius: "10px",
+                      cursor: "pointer",
+                      fontWeight: "bold",
+                      marginTop: 0,
+                    }}
+                  >
+                    {c.nome} ({c.taraKg.toFixed(1)} kg)
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Bloco 4: Seleção de Caixa Utilizada + QUANTIDADE DE CAIXAS */}
+            <div
+              style={{
+                marginBottom: "20px",
+                padding: "15px",
+                background: "rgba(26, 42, 108, 0.05)",
+                borderRadius: "10px",
+              }}
+            >
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <label style={{ margin: 0, color: "#1a2a6c" }}>📦 Tipo de Caixa Utilizada:</label>
+                {selectedCaixa && (
+                  <span style={{ fontSize: "12px", fontWeight: "bold", color: "#b21f1f" }}>
+                    Tara unitária: -{selectedCaixa.taraKg.toFixed(2)} kg
+                  </span>
+                )}
               </div>
 
-              <div className="flex items-center gap-2">
+              {/* Botões dos Tipos de Caixa */}
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
+                  gap: "10px",
+                  marginTop: "10px",
+                }}
+              >
                 <button
-                  onClick={handleExportCSV}
-                  className="px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 flex items-center gap-2"
+                  type="button"
+                  onClick={() => {
+                    setSelectedCaixaId("")
+                    setQuantidadeCaixasInput("1")
+                  }}
+                  style={{
+                    background: selectedCaixaId === "" ? "#1a2a6c" : "#e9ecef",
+                    color: selectedCaixaId === "" ? "white" : "#333",
+                    border: selectedCaixaId === "" ? "2px solid #1a2a6c" : "2px solid transparent",
+                    padding: "12px",
+                    borderRadius: "10px",
+                    cursor: "pointer",
+                    fontWeight: "bold",
+                    marginTop: 0,
+                  }}
                 >
-                  <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
-                  Exportar CSV
+                  Nenhuma (0 kg)
+                </button>
+                {caixas.map((cx) => (
+                  <button
+                    key={cx.id}
+                    type="button"
+                    onClick={() => setSelectedCaixaId(cx.id)}
+                    style={{
+                      background: selectedCaixaId === cx.id ? "#1a2a6c" : "#e9ecef",
+                      color: selectedCaixaId === cx.id ? "white" : "#333",
+                      border: selectedCaixaId === cx.id ? "2px solid #1a2a6c" : "2px solid transparent",
+                      padding: "12px",
+                      borderRadius: "10px",
+                      cursor: "pointer",
+                      fontWeight: "bold",
+                      marginTop: 0,
+                    }}
+                  >
+                    {cx.nome} ({cx.taraKg.toFixed(1)} kg)
+                  </button>
+                ))}
+              </div>
+
+              {/* Campo para QUANTIDADE DE CAIXAS (quando houver caixa selecionada) */}
+              {selectedCaixaId !== "" && (
+                <div
+                  style={{
+                    marginTop: "15px",
+                    padding: "12px",
+                    background: "white",
+                    borderRadius: "10px",
+                    border: "1px solid #cbd5e1",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      marginBottom: "8px",
+                      flexWrap: "wrap",
+                      gap: "6px",
+                    }}
+                  >
+                    <label style={{ margin: 0, fontSize: "13px", fontWeight: "bold", color: "#1a2a6c" }}>
+                      🔢 Quantidade de Caixas Descontadas:
+                    </label>
+                    <span style={{ fontSize: "13px", fontWeight: "bold", color: "#b21f1f" }}>
+                      {qtdCaixasNum} cx × {taraCaixaUnitaria.toFixed(2)} kg = -{taraCaixasTotal.toFixed(2)} kg
+                    </span>
+                  </div>
+
+                  {/* Stepper numérico */}
+                  <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setQuantidadeCaixasInput(
+                          String(Math.max(1, (parseInt(quantidadeCaixasInput, 10) || 1) - 1))
+                        )
+                      }
+                      style={{
+                        width: "48px",
+                        height: "44px",
+                        background: "#e2e8f0",
+                        color: "#1a2a6c",
+                        border: "1px solid #cbd5e1",
+                        borderRadius: "8px",
+                        fontSize: "22px",
+                        fontWeight: "bold",
+                        cursor: "pointer",
+                        marginTop: 0,
+                      }}
+                    >
+                      -
+                    </button>
+                    <input
+                      type="number"
+                      min="1"
+                      step="1"
+                      value={quantidadeCaixasInput}
+                      onChange={(e) => setQuantidadeCaixasInput(e.target.value)}
+                      style={{
+                        flex: 1,
+                        textAlign: "center",
+                        fontSize: "20px",
+                        fontWeight: "bold",
+                        color: "#1a2a6c",
+                        marginBottom: 0,
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setQuantidadeCaixasInput(
+                          String((parseInt(quantidadeCaixasInput, 10) || 0) + 1)
+                        )
+                      }
+                      style={{
+                        width: "48px",
+                        height: "44px",
+                        background: "#e2e8f0",
+                        color: "#1a2a6c",
+                        border: "1px solid #cbd5e1",
+                        borderRadius: "8px",
+                        fontSize: "22px",
+                        fontWeight: "bold",
+                        cursor: "pointer",
+                        marginTop: 0,
+                      }}
+                    >
+                      +
+                    </button>
+                  </div>
+
+                  {/* Atalhos rápidos de quantidade de caixas */}
+                  <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginTop: "10px" }}>
+                    {["1", "2", "3", "4", "5", "6", "8", "10", "12", "15", "20", "25", "30", "40", "50"].map(
+                      (q) => (
+                        <button
+                          key={q}
+                          type="button"
+                          onClick={() => setQuantidadeCaixasInput(q)}
+                          style={{
+                            width: "auto",
+                            background: quantidadeCaixasInput === q ? "#1a2a6c" : "#f1f5f9",
+                            color: quantidadeCaixasInput === q ? "white" : "#1a2a6c",
+                            border: "1px solid #cbd5e1",
+                            padding: "4px 10px",
+                            borderRadius: "6px",
+                            fontSize: "12px",
+                            fontWeight: "bold",
+                            marginTop: 0,
+                          }}
+                        >
+                          {q} cx
+                        </button>
+                      )
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* PAINEL INDICATIVO VISUAL: PESO BRUTO -> PESO LÍQUIDO (Fórmula e Seta) */}
+            <div
+              style={{
+                marginBottom: "20px",
+                padding: "20px",
+                background: "linear-gradient(135deg, rgba(26, 42, 108, 0.95), rgba(43, 72, 160, 0.95))",
+                borderRadius: "14px",
+                color: "white",
+                boxShadow: "0 6px 16px rgba(26, 42, 108, 0.25)",
+              }}
+            >
+              <div
+                style={{
+                  fontSize: "12px",
+                  fontWeight: "bold",
+                  textTransform: "uppercase",
+                  color: "#fdbb2d",
+                  marginBottom: "8px",
+                }}
+              >
+                Resultado da Pesagem Automática
+              </div>
+
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  flexWrap: "wrap",
+                  gap: "10px",
+                }}
+              >
+                <div>
+                  <div style={{ fontSize: "12px", color: "#cbd5e1" }}>Peso Bruto:</div>
+                  <div style={{ fontSize: "28px", fontWeight: "black", fontFamily: "monospace" }}>
+                    {pesoBrutoNum > 0 ? pesoBrutoNum.toFixed(2) : "0,00"} kg
+                  </div>
+                </div>
+
+                <div
+                  style={{
+                    fontSize: "32px",
+                    fontWeight: "bold",
+                    color: "#fdbb2d",
+                  }}
+                >
+                  →
+                </div>
+
+                <div style={{ textAlign: "right" }}>
+                  <div style={{ fontSize: "12px", color: "#fdbb2d" }}>Peso Líquido Final:</div>
+                  <div
+                    style={{
+                      fontSize: "34px",
+                      fontWeight: "black",
+                      fontFamily: "monospace",
+                      color: "#fdbb2d",
+                    }}
+                  >
+                    {pesoLiquidoNum > 0 ? pesoLiquidoNum.toFixed(2) : "0,00"} kg
+                  </div>
+                </div>
+              </div>
+
+              {/* Detalhamento das Taras */}
+              <div
+                style={{
+                  marginTop: "12px",
+                  paddingTop: "10px",
+                  borderTop: "1px solid rgba(255,255,255,0.2)",
+                  fontSize: "12px",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "4px",
+                }}
+              >
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <span>🛒 Tara Carrinho:</span>
+                  <span style={{ fontWeight: "bold", color: "#cbd5e1" }}>
+                    {selectedCarrinho
+                      ? `${selectedCarrinho.nome} (-${taraCarrinho.toFixed(2)} kg)`
+                      : "Nenhum (0,00 kg)"}
+                  </span>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <span>📦 Tara Caixas ({qtdCaixasNum} cx):</span>
+                  <span style={{ fontWeight: "bold", color: "#fdbb2d" }}>
+                    {selectedCaixa
+                      ? `${qtdCaixasNum}x ${selectedCaixa.nome} (-${taraCaixasTotal.toFixed(2)} kg)`
+                      : "Nenhuma (0,00 kg)"}
+                  </span>
+                </div>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    borderTop: "1px dashed rgba(255,255,255,0.2)",
+                    paddingTop: "4px",
+                    marginTop: "4px",
+                  }}
+                >
+                  <span style={{ fontWeight: "bold" }}>Total Desconto de Taras:</span>
+                  <span style={{ fontWeight: "bold", color: "#fdbb2d", fontSize: "13px" }}>
+                    -{taraTotal.toFixed(2)} kg
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Evidência Fotográfica Opcional */}
+            <div
+              style={{
+                marginBottom: "20px",
+                padding: "15px",
+                background: "rgba(26, 42, 108, 0.05)",
+                borderRadius: "10px",
+              }}
+            >
+              <label style={{ color: "#1a2a6c", marginTop: 0 }}>📷 Evidência Fotográfica (Opcional):</label>
+
+              {!photoPreview ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={startCamera}
+                    style={{
+                      background: "linear-gradient(to right, #1a2a6c, #b21f1f)",
+                      marginTop: "10px",
+                    }}
+                  >
+                    📷 Abrir Câmera
+                  </button>
+
+                  <div style={{ textAlign: "center", margin: "10px 0", color: "#666" }}>
+                    <strong>OU</strong>
+                  </div>
+
+                  <label className="file-upload">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleFileUpload}
+                      hidden
+                    />
+                    📁 Selecionar da Galeria
+                  </label>
+                </>
+              ) : (
+                <>
+                  <img
+                    src={photoPreview}
+                    alt="Evidência"
+                    style={{
+                      width: "100%",
+                      borderRadius: "10px",
+                      marginTop: "10px",
+                      border: "2px solid #1a2a6c",
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setPhotoPreview("")}
+                    style={{ background: "#dc3545", marginTop: "10px" }}
+                  >
+                    ❌ Remover Foto
+                  </button>
+                </>
+              )}
+
+              {cameraActive && (
+                <div style={{ marginTop: "15px", display: "flex", flexDirection: "column" }}>
+                  <video
+                    ref={videoRef}
+                    autoPlay
+                    playsInline
+                    style={{
+                      width: "100%",
+                      border: "2px solid #1a2a6c",
+                      borderRadius: "8px",
+                      marginBottom: "10px",
+                    }}
+                  />
+                  <div style={{ display: "flex", gap: "10px" }}>
+                    <button
+                      type="button"
+                      onClick={capturePhoto}
+                      style={{ flex: 1, background: "#28a745", marginTop: "0" }}
+                    >
+                      📸 Capturar Foto
+                    </button>
+                    <button
+                      type="button"
+                      onClick={stopCamera}
+                      style={{ flex: 1, background: "#dc3545", marginTop: "0" }}
+                    >
+                      ❌ Cancelar Câmera
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <canvas ref={canvasRef} style={{ display: "none" }} />
+
+            {/* Observações */}
+            <div style={{ marginBottom: "20px" }}>
+              <label style={{ color: "#1a2a6c" }}>📝 Observações:</label>
+              <input
+                type="text"
+                placeholder="Ex: Produto conferido no descarregamento, lote A..."
+                value={observacao}
+                onChange={(e) => setObservacao(e.target.value)}
+              />
+            </div>
+
+            {/* BOTÃO PRINCIPAL DE SALVAR CONFERÊNCIA */}
+            <button
+              type="button"
+              disabled={isSaving || pesoBrutoNum <= 0}
+              onClick={handleSalvarConferencia}
+              style={{
+                background:
+                  pesoBrutoNum > 0
+                    ? "linear-gradient(to right, #1a2a6c, #b21f1f)"
+                    : "#6c757d",
+                padding: "16px",
+                fontSize: "16px",
+                fontWeight: "bold",
+                borderRadius: "10px",
+                boxShadow: "0 4px 10px rgba(0,0,0,0.2)",
+              }}
+            >
+              {isSaving ? "⏳ Gravando Conferência..." : "💾 Confirmar e Salvar Conferência"}
+            </button>
+          </>
+        )}
+
+        {/* ========================================================= */}
+        {/* TELA 2: RELATÓRIO DE SIMPLES CONFERÊNCIA                  */}
+        {/* ========================================================= */}
+        {currentScreen === "relatorio" && (
+          <div style={{ marginTop: "10px" }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                flexWrap: "wrap",
+                gap: "10px",
+                marginBottom: "15px",
+              }}
+            >
+              <h2 style={{ margin: 0, color: "#1a2a6c", fontSize: "18px" }}>
+                Histórico de Simples Conferência
+              </h2>
+
+              <div style={{ display: "flex", gap: "8px" }}>
+                <button
+                  type="button"
+                  onClick={handleExportCSV}
+                  style={{
+                    background: "#198754",
+                    color: "white",
+                    padding: "8px 14px",
+                    borderRadius: "6px",
+                    fontWeight: "bold",
+                    fontSize: "12px",
+                    width: "auto",
+                    marginTop: 0,
+                  }}
+                >
+                  📊 Exportar CSV
                 </button>
                 <button
+                  type="button"
                   onClick={() => window.print()}
-                  className="px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 flex items-center gap-2"
+                  style={{
+                    background: "#1a2a6c",
+                    color: "white",
+                    padding: "8px 14px",
+                    borderRadius: "6px",
+                    fontWeight: "bold",
+                    fontSize: "12px",
+                    width: "auto",
+                    marginTop: 0,
+                  }}
                 >
-                  <Printer className="w-4 h-4 text-slate-600" />
-                  Imprimir
+                  🖨️ Imprimir
                 </button>
               </div>
             </div>
 
             {/* Barra de Filtros */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-slate-50 p-3 rounded-xl border border-slate-200">
-              <div className="sm:col-span-2 relative">
-                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                <input
-                  type="text"
-                  value={filtroTexto}
-                  onChange={(e) => setFiltroTexto(e.target.value)}
-                  placeholder="Filtrar por produto ou funcionário..."
-                  className="w-full pl-9 pr-3 py-2 text-xs font-semibold bg-white border border-slate-300 rounded-lg outline-none focus:border-[#1a2a6c]"
-                />
-              </div>
-              <div>
-                <input
-                  type="date"
-                  value={filtroData}
-                  onChange={(e) => setFiltroData(e.target.value)}
-                  className="w-full px-3 py-2 text-xs font-semibold bg-white border border-slate-300 rounded-lg outline-none focus:border-[#1a2a6c]"
-                />
-              </div>
+            <div
+              style={{
+                display: "flex",
+                gap: "10px",
+                marginBottom: "15px",
+                flexWrap: "wrap",
+              }}
+            >
+              <input
+                type="text"
+                placeholder="Filtrar por produto ou responsável..."
+                value={filtroTexto}
+                onChange={(e) => setFiltroTexto(e.target.value)}
+                style={{ flex: 2, minWidth: "200px", marginTop: 0 }}
+              />
+              <input
+                type="date"
+                value={filtroData}
+                onChange={(e) => setFiltroData(e.target.value)}
+                style={{ flex: 1, minWidth: "140px", marginTop: 0 }}
+              />
             </div>
 
-            {/* Tabela de Resultados */}
-            <div className="overflow-x-auto rounded-xl border border-slate-200">
-              <table className="w-full text-left text-xs">
-                <thead className="bg-slate-100 text-slate-700 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200">
-                  <tr>
-                    <th className="p-3">Data e Hora</th>
-                    <th className="p-3">Produto</th>
-                    <th className="p-3 text-center">Peso Bruto → Líquido</th>
-                    <th className="p-3">Carrinho (Tara)</th>
-                    <th className="p-3">Caixa (Tara)</th>
-                    <th className="p-3">Responsável</th>
-                    <th className="p-3">Obs</th>
+            {/* Tabela de Dados */}
+            <div style={{ overflowX: "auto" }}>
+              <table
+                style={{
+                  width: "100%",
+                  borderCollapse: "collapse",
+                  background: "white",
+                  borderRadius: "8px",
+                  overflow: "hidden",
+                  boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
+                  fontSize: "13px",
+                }}
+              >
+                <thead>
+                  <tr style={{ background: "#1a2a6c", color: "white", textAlign: "left" }}>
+                    <th style={{ padding: "12px" }}>Data e Hora</th>
+                    <th style={{ padding: "12px" }}>Produto</th>
+                    <th style={{ padding: "12px", textAlign: "center" }}>Bruto → Líquido</th>
+                    <th style={{ padding: "12px" }}>Carrinho</th>
+                    <th style={{ padding: "12px" }}>Caixa Utilizada</th>
+                    <th style={{ padding: "12px" }}>Responsável</th>
+                    <th style={{ padding: "12px" }}>Obs</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 font-medium">
-                  {relatorioFiltrado.map((c) => (
-                    <tr key={c.id} className="hover:bg-slate-50/80 transition-colors">
-                      <td className="p-3 text-slate-500 whitespace-nowrap">
-                        {new Date(c.createdAt).toLocaleDateString("pt-BR")}{" "}
-                        <span className="text-[10px] text-slate-400">
-                          {new Date(c.createdAt).toLocaleTimeString("pt-BR", {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
+                <tbody>
+                  {relatorioFiltrado.map((item, idx) => (
+                    <tr
+                      key={item.id}
+                      style={{
+                        borderBottom: "1px solid #eee",
+                        background: idx % 2 === 0 ? "white" : "#fcfcfc",
+                      }}
+                    >
+                      <td style={{ padding: "10px", color: "#666" }}>
+                        {new Date(item.createdAt).toLocaleString("pt-BR")}
+                      </td>
+                      <td style={{ padding: "10px", fontWeight: "bold", color: "#1a2a6c" }}>
+                        {item.produtoNome}
+                      </td>
+                      <td style={{ padding: "10px", textAlign: "center", whiteSpace: "nowrap" }}>
+                        <span style={{ color: "#666" }}>{(item.pesoBruto || 0).toFixed(2)} kg</span>
+                        <span style={{ margin: "0 6px", fontWeight: "bold", color: "#b21f1f" }}>
+                          →
+                        </span>
+                        <span
+                          style={{
+                            fontWeight: "bold",
+                            color: "#155724",
+                            background: "#d4edda",
+                            padding: "3px 8px",
+                            borderRadius: "4px",
+                          }}
+                        >
+                          {(item.pesoLiquido || 0).toFixed(2)} kg
                         </span>
                       </td>
-                      <td className="p-3 font-bold text-slate-900">{c.produtoNome}</td>
-                      <td className="p-3 text-center whitespace-nowrap">
-                        <span className="font-mono text-slate-600">{c.pesoBruto.toFixed(2)} kg</span>
-                        <span className="mx-1.5 text-amber-600 font-bold">→</span>
-                        <span className="font-mono font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                          {c.pesoLiquido.toFixed(2)} kg
-                        </span>
+                      <td style={{ padding: "10px", color: "#555" }}>
+                        {item.tipoCarrinhoNome || "—"}{" "}
+                        {item.taraCarrinhoKg > 0 && `(-${item.taraCarrinhoKg.toFixed(1)}kg)`}
                       </td>
-                      <td className="p-3 text-slate-600">
-                        {c.tipoCarrinhoNome || "—"}{" "}
-                        {c.taraCarrinhoKg > 0 && (
-                          <span className="text-[10px] text-slate-400">
-                            (-{c.taraCarrinhoKg.toFixed(2)} kg)
+                      <td style={{ padding: "10px", color: "#555" }}>
+                        {item.tipoCaixaNome ? (
+                          <span>
+                            {item.tipoCaixaNome}{" "}
+                            <strong style={{ color: "#b21f1f" }}>
+                              ({item.quantidadeCaixas || 1} cx / -{(item.taraCaixaKg || 0).toFixed(1)}kg)
+                            </strong>
                           </span>
+                        ) : (
+                          "—"
                         )}
                       </td>
-                      <td className="p-3 text-slate-600">
-                        {c.tipoCaixaNome || "—"}{" "}
-                        {c.taraCaixaKg > 0 && (
-                          <span className="text-[10px] text-slate-400">
-                            (-{c.taraCaixaKg.toFixed(2)} kg)
-                          </span>
-                        )}
-                      </td>
-                      <td className="p-3 text-slate-700 font-semibold">{c.responsavel}</td>
-                      <td className="p-3 text-slate-500 truncate max-w-[150px]">
-                        {c.observacao || "—"}
-                      </td>
+                      <td style={{ padding: "10px", fontWeight: 600 }}>{item.responsavel}</td>
+                      <td style={{ padding: "10px", color: "#777" }}>{item.observacao || "—"}</td>
                     </tr>
                   ))}
                   {relatorioFiltrado.length === 0 && (
                     <tr>
-                      <td colSpan={7} className="p-8 text-center text-slate-400">
-                        Nenhuma conferência encontrada para os filtros selecionados.
+                      <td colSpan={7} style={{ padding: "20px", textAlign: "center", color: "#999" }}>
+                        Nenhum registro de conferência encontrado.
                       </td>
                     </tr>
                   )}
@@ -904,99 +1455,219 @@ export default function SimplesConferenciaPage() {
           </div>
         )}
 
-        {/* ABA 3: CADASTRO DE TARAS (ADMIN) */}
-        {activeTab === "taras" && user?.role === "admin" && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* ========================================================= */}
+        {/* TELA 3: CADASTRO DE TARAS (ADMIN)                         */}
+        {/* ========================================================= */}
+        {currentScreen === "taras" && loggedUser?.role === "admin" && (
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+              gap: "20px",
+              marginTop: "10px",
+            }}
+          >
             {/* Carrinhos */}
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="font-bold text-slate-900 flex items-center gap-2">
-                  <ShoppingCart className="w-5 h-5 text-blue-600" />
-                  Modelos de Carrinho & Taras
-                </h3>
-              </div>
-
-              <form onSubmit={handleCriarCarrinho} className="flex gap-2">
+            <div
+              style={{
+                padding: "15px",
+                background: "rgba(26, 42, 108, 0.05)",
+                borderRadius: "10px",
+              }}
+            >
+              <h3 style={{ margin: "0 0 10px 0", color: "#1a2a6c" }}>🛒 Modelos de Carrinho</h3>
+              <form onSubmit={handleCriarCarrinho} style={{ display: "flex", gap: "8px" }}>
                 <input
                   type="text"
                   placeholder="Nome (ex: Carrinho 4)"
                   value={novoCarrinhoNome}
                   onChange={(e) => setNovoCarrinhoNome(e.target.value)}
-                  className="flex-1 px-3 py-2 text-xs border border-slate-300 rounded-lg outline-none focus:border-[#1a2a6c]"
+                  style={{ flex: 2, marginTop: 0 }}
                 />
                 <input
                   type="text"
-                  placeholder="Tara (kg)"
+                  placeholder="Tara kg"
                   value={novoCarrinhoTara}
                   onChange={(e) => setNovoCarrinhoTara(e.target.value)}
-                  className="w-24 px-3 py-2 text-xs border border-slate-300 rounded-lg outline-none focus:border-[#1a2a6c]"
+                  style={{ flex: 1, marginTop: 0 }}
                 />
                 <button
                   type="submit"
-                  className="px-3 py-2 bg-[#1a2a6c] text-white rounded-lg text-xs font-bold hover:bg-[#203a8f] flex items-center gap-1"
+                  style={{
+                    background: "#1a2a6c",
+                    color: "white",
+                    padding: "10px",
+                    width: "auto",
+                    marginTop: 0,
+                  }}
                 >
-                  <Plus className="w-4 h-4" /> Adicionar
+                  +
                 </button>
               </form>
 
-              <div className="divide-y divide-slate-100 border border-slate-200 rounded-xl overflow-hidden">
+              <div style={{ marginTop: "10px" }}>
                 {carrinhos.map((c) => (
-                  <div key={c.id} className="p-3 flex items-center justify-between text-xs">
-                    <span className="font-bold text-slate-800">{c.nome}</span>
-                    <span className="font-mono bg-blue-50 text-blue-800 px-2.5 py-1 rounded-md font-bold">
-                      {c.taraKg.toFixed(2)} kg
-                    </span>
+                  <div
+                    key={c.id}
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      padding: "8px",
+                      background: "white",
+                      borderRadius: "6px",
+                      marginBottom: "6px",
+                      fontSize: "13px",
+                    }}
+                  >
+                    <span>{c.nome}</span>
+                    <strong style={{ color: "#1a2a6c" }}>{c.taraKg.toFixed(2)} kg</strong>
                   </div>
                 ))}
               </div>
             </div>
 
             {/* Caixas */}
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="font-bold text-slate-900 flex items-center gap-2">
-                  <Box className="w-5 h-5 text-amber-600" />
-                  Modelos de Caixa & Taras
-                </h3>
-              </div>
-
-              <form onSubmit={handleCriarCaixa} className="flex gap-2">
+            <div
+              style={{
+                padding: "15px",
+                background: "rgba(26, 42, 108, 0.05)",
+                borderRadius: "10px",
+              }}
+            >
+              <h3 style={{ margin: "0 0 10px 0", color: "#1a2a6c" }}>📦 Modelos de Caixa</h3>
+              <form onSubmit={handleCriarCaixa} style={{ display: "flex", gap: "8px" }}>
                 <input
                   type="text"
                   placeholder="Nome (ex: Caixa 3)"
                   value={novaCaixaNome}
                   onChange={(e) => setNovaCaixaNome(e.target.value)}
-                  className="flex-1 px-3 py-2 text-xs border border-slate-300 rounded-lg outline-none focus:border-[#1a2a6c]"
+                  style={{ flex: 2, marginTop: 0 }}
                 />
                 <input
                   type="text"
-                  placeholder="Tara (kg)"
+                  placeholder="Tara kg"
                   value={novaCaixaTara}
                   onChange={(e) => setNovaCaixaTara(e.target.value)}
-                  className="w-24 px-3 py-2 text-xs border border-slate-300 rounded-lg outline-none focus:border-[#1a2a6c]"
+                  style={{ flex: 1, marginTop: 0 }}
                 />
                 <button
                   type="submit"
-                  className="px-3 py-2 bg-[#1a2a6c] text-white rounded-lg text-xs font-bold hover:bg-[#203a8f] flex items-center gap-1"
+                  style={{
+                    background: "#1a2a6c",
+                    color: "white",
+                    padding: "10px",
+                    width: "auto",
+                    marginTop: 0,
+                  }}
                 >
-                  <Plus className="w-4 h-4" /> Adicionar
+                  +
                 </button>
               </form>
 
-              <div className="divide-y divide-slate-100 border border-slate-200 rounded-xl overflow-hidden">
+              <div style={{ marginTop: "10px" }}>
                 {caixas.map((cx) => (
-                  <div key={cx.id} className="p-3 flex items-center justify-between text-xs">
-                    <span className="font-bold text-slate-800">{cx.nome}</span>
-                    <span className="font-mono bg-amber-50 text-amber-800 px-2.5 py-1 rounded-md font-bold">
-                      {cx.taraKg.toFixed(2)} kg
-                    </span>
+                  <div
+                    key={cx.id}
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      padding: "8px",
+                      background: "white",
+                      borderRadius: "6px",
+                      marginBottom: "6px",
+                      fontSize: "13px",
+                    }}
+                  >
+                    <span>{cx.nome}</span>
+                    <strong style={{ color: "#b21f1f" }}>{cx.taraKg.toFixed(2)} kg</strong>
                   </div>
                 ))}
               </div>
             </div>
           </div>
         )}
-      </main>
+
+        {/* ========================================================= */}
+        {/* NAVEGAÇÃO INFERIOR DINÂMICA (PADRÃO VISUAL DO SISTEMA)    */}
+        {/* ========================================================= */}
+        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginTop: "25px" }}>
+          {currentScreen !== "balanca" && (
+            <button
+              type="button"
+              onClick={() => setCurrentScreen("balanca")}
+              style={{ flex: 1, minWidth: "140px", background: "#1a2a6c", marginTop: 0 }}
+            >
+              ⚖️ Balança
+            </button>
+          )}
+
+          {currentScreen !== "relatorio" && (
+            <button
+              type="button"
+              onClick={() => setCurrentScreen("relatorio")}
+              style={{ flex: 1, minWidth: "140px", background: "#17a2b8", marginTop: 0 }}
+            >
+              📜 Relatório ({conferencias.length})
+            </button>
+          )}
+
+          {currentScreen !== "taras" && loggedUser?.role === "admin" && (
+            <button
+              type="button"
+              onClick={() => setCurrentScreen("taras")}
+              style={{ flex: 1, minWidth: "140px", background: "#6c757d", marginTop: 0 }}
+            >
+              ⚙️ Cadastrar Taras
+            </button>
+          )}
+
+          <button
+            type="button"
+            onClick={() => {
+              window.location.href = "/"
+            }}
+            style={{ flex: 1, minWidth: "140px", background: "#b21f1f", marginTop: 0 }}
+          >
+            ⚠️ Controle de Perdas
+          </button>
+
+          {(modulos.moduloEstoqueAtivo || loggedUser?.role === "admin") && (
+            <button
+              type="button"
+              onClick={() => {
+                window.location.href = "/gerenciador-estoque"
+              }}
+              style={{ flex: 1, minWidth: "140px", background: "#4b5563", marginTop: 0 }}
+            >
+              📦 Estoque
+            </button>
+          )}
+
+          {(modulos.moduloSeparacaoAtivo || loggedUser?.role === "admin") && (
+            <button
+              type="button"
+              onClick={() => {
+                window.location.href = "/separacao"
+              }}
+              style={{ flex: 1, minWidth: "140px", background: "#d97706", marginTop: 0 }}
+            >
+              📋 Separação
+            </button>
+          )}
+
+          {(modulos.moduloExcelAtivo || loggedUser?.role === "admin") && (
+            <button
+              type="button"
+              onClick={() => {
+                window.location.href = "/precos"
+              }}
+              style={{ flex: 1, minWidth: "140px", background: "#2563eb", marginTop: 0 }}
+            >
+              📊 Preços
+            </button>
+          )}
+        </div>
+      </div>
     </div>
   )
 }

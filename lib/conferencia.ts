@@ -27,6 +27,7 @@ export interface SimplesConferenciaItem {
   taraCarrinhoKg: number
   tipoCaixaId?: string
   tipoCaixaNome?: string
+  quantidadeCaixas?: number
   taraCaixaKg: number
   pesoLiquido: number
   observacao?: string
@@ -191,6 +192,7 @@ export async function getSimplesConferencias(limit = 100): Promise<SimplesConfer
           taraCarrinhoKg: Number(r.tara_carrinho_kg || 0),
           tipoCaixaId: r.tipo_caixa_id,
           tipoCaixaNome: r.tipo_caixa_nome,
+          quantidadeCaixas: Number(r.quantidade_caixas || 1),
           taraCaixaKg: Number(r.tara_caixa_kg || 0),
           pesoLiquido: Number(r.peso_liquido || 0),
           observacao: r.observacao || "",
@@ -226,6 +228,7 @@ export async function addSimplesConferencia(
     taraCarrinhoKg: Number(item.taraCarrinhoKg || 0),
     tipoCaixaId: item.tipoCaixaId || "",
     tipoCaixaNome: item.tipoCaixaNome || "",
+    quantidadeCaixas: Math.max(1, Number(item.quantidadeCaixas) || 1),
     taraCaixaKg: Number(item.taraCaixaKg || 0),
     pesoLiquido: Number(item.pesoLiquido),
     observacao: item.observacao || "",
@@ -263,6 +266,7 @@ export async function addSimplesConferencia(
         tara_carrinho_kg: finalItem.taraCarrinhoKg,
         tipo_caixa_id: finalItem.tipoCaixaId || null,
         tipo_caixa_nome: finalItem.tipoCaixaNome || null,
+        quantidade_caixas: finalItem.quantidadeCaixas,
         tara_caixa_kg: finalItem.taraCaixaKg,
         peso_liquido: finalItem.pesoLiquido,
         observacao: finalItem.observacao || null,

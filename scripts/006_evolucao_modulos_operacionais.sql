@@ -50,6 +50,7 @@ CREATE TABLE IF NOT EXISTS public.simples_conferencia (
   tara_carrinho_kg NUMERIC(6, 3) NOT NULL DEFAULT 0,
   tipo_caixa_id TEXT,
   tipo_caixa_nome TEXT,
+  quantidade_caixas INTEGER NOT NULL DEFAULT 1,
   tara_caixa_kg NUMERIC(6, 3) NOT NULL DEFAULT 0,
   peso_liquido NUMERIC(10, 3) NOT NULL,
   observacao TEXT,
