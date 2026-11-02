@@ -1,6 +1,7 @@
 import type React from "react"
 import "./globals.css"
 import type { Metadata, Viewport } from "next"
+import { SwCleanup } from "@/components/sw-cleanup"
 
 export const metadata: Metadata = {
   title: "Maia Distribuidora — Sistema Operacional",
@@ -17,8 +18,6 @@ export const viewport: Viewport = {
   themeColor: "#1a2a6c",
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
 }
 
 export default function RootLayout({
@@ -29,28 +28,14 @@ export default function RootLayout({
   return (
     <html lang="pt-br">
       <head>
-        <link rel="manifest" href="/manifest.json" />
-        <link rel="apple-touch-icon" href="/apple-icon.png" />
         <link
           rel="stylesheet"
           href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
         />
       </head>
       <body>
+        <SwCleanup />
         {children}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              if ('serviceWorker' in navigator) {
-                window.addEventListener('load', function() {
-                  navigator.serviceWorker.register('/sw.js').catch(function(err) {
-                    console.log('SW registration note:', err);
-                  });
-                });
-              }
-            `,
-          }}
-        />
       </body>
     </html>
   )

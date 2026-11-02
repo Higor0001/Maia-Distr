@@ -114,28 +114,35 @@ export default function SimplesConferenciaPage() {
       const resItens = await fetch("/api/estoque-itens")
       if (resItens.ok) {
         const itensData = await resItens.json()
-        setCatalog(itensData.itens || itensData || [])
+        const itemsList = Array.isArray(itensData?.items)
+          ? itensData.items
+          : Array.isArray(itensData?.itens)
+          ? itensData.itens
+          : Array.isArray(itensData)
+          ? itensData
+          : []
+        setCatalog(itemsList)
       }
 
       // Carrinhos
       const resCarrinhos = await fetch("/api/carrinhos-tara")
       if (resCarrinhos.ok) {
         const cData = await resCarrinhos.json()
-        setCarrinhos(cData.carrinhos || [])
+        setCarrinhos(Array.isArray(cData?.carrinhos) ? cData.carrinhos : [])
       }
 
       // Caixas
       const resCaixas = await fetch("/api/caixas-tara")
       if (resCaixas.ok) {
         const cxData = await resCaixas.json()
-        setCaixas(cxData.caixas || [])
+        setCaixas(Array.isArray(cxData?.caixas) ? cxData.caixas : [])
       }
 
       // Histórico
       const resConf = await fetch("/api/simples-conferencia?limit=200")
       if (resConf.ok) {
         const confData = await resConf.json()
-        setConferencias(confData.list || [])
+        setConferencias(Array.isArray(confData?.list) ? confData.list : [])
       }
     } catch (err) {
       console.error("Erro ao carregar dados:", err)
@@ -148,11 +155,11 @@ export default function SimplesConferenciaPage() {
 
   // Cálculo de Tara e Peso Líquido
   const selectedCarrinho = useMemo(
-    () => carrinhos.find((c) => c.id === selectedCarrinhoId),
+    () => (Array.isArray(carrinhos) ? carrinhos : []).find((c) => c.id === selectedCarrinhoId),
     [carrinhos, selectedCarrinhoId]
   )
   const selectedCaixa = useMemo(
-    () => caixas.find((c) => c.id === selectedCaixaId),
+    () => (Array.isArray(caixas) ? caixas : []).find((c) => c.id === selectedCaixaId),
     [caixas, selectedCaixaId]
   )
 
@@ -165,13 +172,14 @@ export default function SimplesConferenciaPage() {
 
   // Filtro de produtos
   const filteredProducts = useMemo(() => {
-    if (!productSearch) return catalog.slice(0, 15)
+    const list = Array.isArray(catalog) ? catalog : []
+    if (!productSearch) return list.slice(0, 15)
     const term = productSearch.toLowerCase()
-    return catalog
+    return list
       .filter(
         (p) =>
-          p.descricao.toLowerCase().includes(term) ||
-          p.reduzido.toString().includes(term)
+          p?.descricao?.toLowerCase().includes(term) ||
+          p?.reduzido?.toString().includes(term)
       )
       .slice(0, 20)
   }, [catalog, productSearch])
@@ -298,12 +306,13 @@ export default function SimplesConferenciaPage() {
 
   // Relatório filtrado
   const relatorioFiltrado = useMemo(() => {
-    return conferencias.filter((c) => {
+    const list = Array.isArray(conferencias) ? conferencias : []
+    return list.filter((c) => {
       const matchTexto =
         !filtroTexto ||
-        c.produtoNome.toLowerCase().includes(filtroTexto.toLowerCase()) ||
-        c.responsavel.toLowerCase().includes(filtroTexto.toLowerCase())
-      const matchData = !filtroData || c.createdAt.startsWith(filtroData)
+        c?.produtoNome?.toLowerCase().includes(filtroTexto.toLowerCase()) ||
+        c?.responsavel?.toLowerCase().includes(filtroTexto.toLowerCase())
+      const matchData = !filtroData || c?.createdAt?.startsWith(filtroData)
       return matchTexto && matchData
     })
   }, [conferencias, filtroTexto, filtroData])

@@ -103,25 +103,25 @@ export default function SeparacaoPage() {
       const resPedidos = await fetch("/api/separacao/pedidos")
       if (resPedidos.ok) {
         const pData = await resPedidos.json()
-        setPedidos(pData.pedidos || [])
+        setPedidos(Array.isArray(pData?.pedidos) ? pData.pedidos : [])
       }
 
       const resCarrinhos = await fetch("/api/carrinhos-tara")
       if (resCarrinhos.ok) {
         const cData = await resCarrinhos.json()
-        setCarrinhos(cData.carrinhos || [])
+        setCarrinhos(Array.isArray(cData?.carrinhos) ? cData.carrinhos : [])
       }
 
       const resCaixas = await fetch("/api/caixas-tara")
       if (resCaixas.ok) {
         const cxData = await resCaixas.json()
-        setCaixas(cxData.caixas || [])
+        setCaixas(Array.isArray(cxData?.caixas) ? cxData.caixas : [])
       }
 
       const resUsers = await fetch("/api/users")
       if (resUsers.ok) {
         const uData = await resUsers.json()
-        setUsuariosAjudantes(uData.users || [])
+        setUsuariosAjudantes(Array.isArray(uData?.users) ? uData.users : [])
       }
     } catch (err) {
       console.error(err)
