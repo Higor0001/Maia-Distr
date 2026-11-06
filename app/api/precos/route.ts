@@ -1,23 +1,12 @@
 import { NextResponse } from "next/server"
-import { getSystemSettings } from "@/lib/settings"
 import { getSession } from "@/lib/auth"
 import fs from "fs/promises"
 import path from "path"
 
 const HISTORICO_PRECOS_FILE = path.join(process.cwd(), "data", "precos-historico.json")
 
-export async function GET(request: Request) {
+export async function GET() {
   try {
-    const settings = await getSystemSettings()
-    const session = getSession(request)
-
-    if (!settings.modulos?.moduloExcelAtivo && session?.role !== "admin") {
-      return NextResponse.json(
-        { ok: false, error: "Módulo de atualização de preços requer ativação nas configurações." },
-        { status: 403 }
-      )
-    }
-
     let historico = []
     try {
       const raw = await fs.readFile(HISTORICO_PRECOS_FILE, "utf-8")
@@ -34,15 +23,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const settings = await getSystemSettings()
     const session = getSession(request)
-
-    if (!settings.modulos?.moduloExcelAtivo && session?.role !== "admin") {
-      return NextResponse.json(
-        { ok: false, error: "Módulo de atualização de preços requer ativação nas configurações." },
-        { status: 403 }
-      )
-    }
 
     const body = await request.json()
     const { alteracoes, arquivoOrigem, colunaPreco } = body

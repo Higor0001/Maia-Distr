@@ -97,13 +97,13 @@ export function getDefaultSettings(): SystemSettings {
       notificacoesAtivas: true,
     },
     modulos: {
-      moduloEstoqueAtivo: false, // Desativado na primeira etapa
+      moduloEstoqueAtivo: true,
       moduloPerdasAtivo: true,
       moduloConferenciaAtivo: true,
-      moduloSeparacaoAtivo: false, // Não público até ser ativado
-      moduloExcelAtivo: false, // Requer ativação nas configurações
-      moduloCloudR2Ativo: false,
-      moduloSyncAgentAtivo: false,
+      moduloSeparacaoAtivo: true,
+      moduloExcelAtivo: true,
+      moduloCloudR2Ativo: true,
+      moduloSyncAgentAtivo: true,
     },
   }
 }
@@ -118,7 +118,15 @@ export async function loadLocalSettings(): Promise<SystemSettings> {
       telegram: { ...defaults.telegram, ...(parsed.telegram || {}) },
       smb: { ...defaults.smb, ...(parsed.smb || {}) },
       geral: { ...defaults.geral, ...(parsed.geral || {}) },
-      modulos: { ...defaults.modulos, ...(parsed.modulos || {}) },
+      modulos: {
+        ...defaults.modulos,
+        ...(parsed.modulos || {}),
+        moduloEstoqueAtivo: true,
+        moduloPerdasAtivo: true,
+        moduloConferenciaAtivo: true,
+        moduloSeparacaoAtivo: true,
+        moduloExcelAtivo: true,
+      },
     }
   } catch {
     return defaults
@@ -153,7 +161,15 @@ export async function getSystemSettings(): Promise<SystemSettings> {
           } else if (row.chave === "geral" && row.valor) {
             settings.geral = { ...settings.geral, ...row.valor }
           } else if (row.chave === "modulos" && row.valor) {
-            settings.modulos = { ...settings.modulos, ...row.valor }
+            settings.modulos = {
+              ...settings.modulos,
+              ...row.valor,
+              moduloEstoqueAtivo: true,
+              moduloPerdasAtivo: true,
+              moduloConferenciaAtivo: true,
+              moduloSeparacaoAtivo: true,
+              moduloExcelAtivo: true,
+            }
           }
         }
       }

@@ -25,6 +25,7 @@ export interface SimplesConferenciaItem {
   tipoCarrinhoId?: string
   tipoCarrinhoNome?: string
   taraCarrinhoKg: number
+  taraPaleteKg?: number
   tipoCaixaId?: string
   tipoCaixaNome?: string
   quantidadeCaixas?: number
@@ -181,24 +182,35 @@ export async function getSimplesConferencias(limit = 100): Promise<SimplesConfer
     if (res && res.ok) {
       const rows = await res.json()
       if (Array.isArray(rows)) {
-        return rows.map((r: any) => ({
-          id: r.id,
-          produtoReduzido: r.produto_reduzido,
-          produtoNome: r.produto_nome,
-          responsavel: r.responsavel,
-          pesoBruto: Number(r.peso_bruto || 0),
-          tipoCarrinhoId: r.tipo_carrinho_id,
-          tipoCarrinhoNome: r.tipo_carrinho_nome,
-          taraCarrinhoKg: Number(r.tara_carrinho_kg || 0),
-          tipoCaixaId: r.tipo_caixa_id,
-          tipoCaixaNome: r.tipo_caixa_nome,
-          quantidadeCaixas: Number(r.quantidade_caixas || 1),
-          taraCaixaKg: Number(r.tara_caixa_kg || 0),
-          pesoLiquido: Number(r.peso_liquido || 0),
-          observacao: r.observacao || "",
-          fotoUrl: r.foto_url || "",
-          createdAt: r.created_at,
-        }))
+        return rows.map((r: any) => {
+          let paleteKg = Number(r.tara_palete_kg || 0)
+          const obsRaw = String(r.observacao || "")
+          if (!paleteKg && obsRaw) {
+            const match = obsRaw.match(/\[Palete:\s*-?([\d.,]+)\s*kg\]/i)
+            if (match) {
+              paleteKg = Number(match[1].replace(",", ".")) || 0
+            }
+          }
+          return {
+            id: r.id,
+            produtoReduzido: r.produto_reduzido,
+            produtoNome: r.produto_nome,
+            responsavel: r.responsavel,
+            pesoBruto: Number(r.peso_bruto || 0),
+            tipoCarrinhoId: r.tipo_carrinho_id,
+            tipoCarrinhoNome: r.tipo_carrinho_nome,
+            taraCarrinhoKg: Number(r.tara_carrinho_kg || 0),
+            taraPaleteKg: paleteKg,
+            tipoCaixaId: r.tipo_caixa_id,
+            tipoCaixaNome: r.tipo_caixa_nome,
+            quantidadeCaixas: Number(r.quantidade_caixas || 1),
+            taraCaixaKg: Number(r.tara_caixa_kg || 0),
+            pesoLiquido: Number(r.peso_liquido || 0),
+            observacao: obsRaw,
+            fotoUrl: r.foto_url || "",
+            createdAt: r.created_at,
+          }
+        })
       }
     }
   } catch (err) {
@@ -226,6 +238,7 @@ export async function addSimplesConferencia(
     tipoCarrinhoId: item.tipoCarrinhoId || "",
     tipoCarrinhoNome: item.tipoCarrinhoNome || "",
     taraCarrinhoKg: Number(item.taraCarrinhoKg || 0),
+    taraPaleteKg: Number(item.taraPaleteKg || 0),
     tipoCaixaId: item.tipoCaixaId || "",
     tipoCaixaNome: item.tipoCaixaNome || "",
     quantidadeCaixas: Math.max(1, Number(item.quantidadeCaixas) || 1),
@@ -251,29 +264,49 @@ export async function addSimplesConferencia(
     console.error("Erro ao salvar local em simples-conferencia.json:", err)
   }
 
-  // 2. Salvar no Supabase
+  // 2. Salvar no Supabase (com fallback automático caso coluna tara_palete_kg ainda não exista)
   try {
-    await supabaseFetch("simples_conferencia", {
+    const baseRow = {
+      id: finalItem.id,
+      produto_reduzido: finalItem.produtoReduzido,
+      produto_nome: finalItem.produtoNome,
+      responsavel: finalItem.responsavel,
+      peso_bruto: finalItem.pesoBruto,
+      tipo_carrinho_id: finalItem.tipoCarrinhoId || null,
+      tipo_carrinho_nome: finalItem.tipoCarrinhoNome || null,
+      tara_carrinho_kg: finalItem.taraCarrinhoKg,
+      tipo_caixa_id: finalItem.tipoCaixaId || null,
+      tipo_caixa_nome: finalItem.tipoCaixaNome || null,
+      quantidade_caixas: finalItem.quantidadeCaixas,
+      tara_caixa_kg: finalItem.taraCaixaKg,
+      peso_liquido: finalItem.pesoLiquido,
+      observacao: finalItem.observacao || null,
+      foto_url: finalItem.fotoUrl || null,
+      created_at: finalItem.createdAt,
+    }
+
+    const res = await supabaseFetch("simples_conferencia", {
       method: "POST",
       body: JSON.stringify({
-        id: finalItem.id,
-        produto_reduzido: finalItem.produtoReduzido,
-        produto_nome: finalItem.produtoNome,
-        responsavel: finalItem.responsavel,
-        peso_bruto: finalItem.pesoBruto,
-        tipo_carrinho_id: finalItem.tipoCarrinhoId || null,
-        tipo_carrinho_nome: finalItem.tipoCarrinhoNome || null,
-        tara_carrinho_kg: finalItem.taraCarrinhoKg,
-        tipo_caixa_id: finalItem.tipoCaixaId || null,
-        tipo_caixa_nome: finalItem.tipoCaixaNome || null,
-        quantidade_caixas: finalItem.quantidadeCaixas,
-        tara_caixa_kg: finalItem.taraCaixaKg,
-        peso_liquido: finalItem.pesoLiquido,
-        observacao: finalItem.observacao || null,
-        foto_url: finalItem.fotoUrl || null,
-        created_at: finalItem.createdAt,
+        ...baseRow,
+        tara_palete_kg: finalItem.taraPaleteKg || 0,
       }),
     })
+
+    if (res && !res.ok) {
+      const paleteTag =
+        (finalItem.taraPaleteKg || 0) > 0
+          ? `[Palete: -${Number(finalItem.taraPaleteKg).toFixed(2)}kg]`
+          : ""
+      const fallbackObs = [paleteTag, finalItem.observacao].filter(Boolean).join(" ").trim()
+      await supabaseFetch("simples_conferencia", {
+        method: "POST",
+        body: JSON.stringify({
+          ...baseRow,
+          observacao: fallbackObs || null,
+        }),
+      })
+    }
   } catch (err) {
     console.warn("Aviso ao salvar simples_conferencia no Supabase:", err)
   }

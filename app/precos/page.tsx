@@ -1,12 +1,10 @@
 "use client"
 
 import React, { useState, useEffect } from "react"
-import Link from "next/link"
 import { NavHeader } from "@/components/layout/nav-header"
 import {
   FileSpreadsheet,
   CheckCircle2,
-  Lock,
   ArrowRight,
   RefreshCw,
   Search,
@@ -31,9 +29,6 @@ export default function AtualizacaoPrecosPage() {
     unidade?: string
     role?: string
   } | null>(null)
-
-  const [moduloExcelAtivo, setModuloExcelAtivo] = useState(false)
-  const [loadingConfig, setLoadingConfig] = useState(true)
 
   // Etapas do fluxo
   const [step, setStep] = useState<"selecao" | "previa" | "sucesso">("selecao")
@@ -86,16 +81,6 @@ export default function AtualizacaoPrecosPage() {
         }
       })
       .catch(() => {})
-
-    fetch("/api/admin/settings")
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (data?.settings?.modulos?.moduloExcelAtivo) {
-          setModuloExcelAtivo(true)
-        }
-      })
-      .catch(() => {})
-      .finally(() => setLoadingConfig(false))
   }, [])
 
   // Confirmar Atualização
@@ -125,34 +110,6 @@ export default function AtualizacaoPrecosPage() {
     }
   }
 
-  // PROTEÇÃO: REQUER ATIVAÇÃO NAS CONFIGURAÇÕES
-  if (!loadingConfig && !moduloExcelAtivo && user?.role !== "admin") {
-    return (
-      <div className="min-h-screen bg-slate-100 flex flex-col items-center justify-center p-6 text-center font-sans">
-        <div className="max-w-md w-full bg-white rounded-3xl p-8 shadow-xl border border-slate-200 space-y-5">
-          <div className="w-16 h-16 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center mx-auto text-2xl font-bold">
-            <Lock className="w-8 h-8 text-amber-700" />
-          </div>
-          <div className="space-y-2">
-            <h1 className="text-xl font-black text-slate-900">Módulo Requer Ativação</h1>
-            <p className="text-sm text-slate-600 leading-relaxed">
-              A Integração nativa com Excel e Atualização de Preços está desativada no momento. Para
-              utilizá-la, solicite a ativação ao administrador nas configurações do sistema.
-            </p>
-          </div>
-          <div className="pt-2 flex flex-col gap-2.5">
-            <Link
-              href="/simples-conferencia"
-              className="w-full py-3 px-4 bg-[#1a2a6c] text-white font-bold rounded-xl text-sm transition-all shadow"
-            >
-              Ir para Simples Conferência
-            </Link>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 flex flex-col font-sans">
       <NavHeader user={user} />
@@ -169,11 +126,6 @@ export default function AtualizacaoPrecosPage() {
                   <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
                     Integração Excel — Atualização de Preços
                   </h1>
-                  {!moduloExcelAtivo && (
-                    <span className="text-[10px] bg-amber-500 text-white font-bold px-2 py-0.5 rounded-full uppercase">
-                      Admin
-                    </span>
-                  )}
                 </div>
                 <p className="text-xs sm:text-sm text-slate-500">
                   Sincronização com Microsoft Excel Online / OneDrive com prévia e auditoria sem alterar estoques.

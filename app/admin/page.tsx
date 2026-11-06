@@ -328,13 +328,13 @@ export default function AdminPage() {
   }
 
   const [modulosForm, setModulosForm] = useState({
-    moduloEstoqueAtivo: false,
+    moduloEstoqueAtivo: true,
     moduloPerdasAtivo: true,
     moduloConferenciaAtivo: true,
-    moduloSeparacaoAtivo: false,
-    moduloExcelAtivo: false,
-    moduloCloudR2Ativo: false,
-    moduloSyncAgentAtivo: false,
+    moduloSeparacaoAtivo: true,
+    moduloExcelAtivo: true,
+    moduloCloudR2Ativo: true,
+    moduloSyncAgentAtivo: true,
   })
   const [savingModulos, setSavingModulos] = useState(false)
   const [modulosSuccess, setModulosSuccess] = useState("")
@@ -2365,12 +2365,12 @@ export default function AdminPage() {
                   <div>
                     <div className="font-bold text-sm text-slate-900 flex items-center gap-2">
                       <span>Gerenciador de Estoque</span>
-                      <span className="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-bold uppercase">
-                        Desativado na Etapa 1
+                      <span className="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-bold uppercase">
+                        Ativo / Liberado
                       </span>
                     </div>
                     <div className="text-xs text-slate-500 mt-0.5">
-                      Contagem, movimentações e baixas de estoque. Tabelas e catálogo permanecem preservados no banco.
+                      Contagem, movimentações e baixas de estoque com desconto de taras e peso variável de palete.
                     </div>
                   </div>
                   <input
@@ -2389,11 +2389,11 @@ export default function AdminPage() {
                     <div className="font-bold text-sm text-slate-900 flex items-center gap-2">
                       <span>Simples Conferência & Pesagem</span>
                       <span className="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-bold uppercase">
-                        Ativo
+                        Ativo / Liberado
                       </span>
                     </div>
                     <div className="text-xs text-slate-500 mt-0.5">
-                      Conferência com taras predefinidas de carrinhos e caixas, cálculo Bruto → Líquido sem baixa de estoque.
+                      Conferência com taras de carrinhos, caixas e peso variável de palete, cálculo Bruto → Líquido.
                     </div>
                   </div>
                   <input
@@ -2412,11 +2412,11 @@ export default function AdminPage() {
                     <div className="font-bold text-sm text-slate-900 flex items-center gap-2">
                       <span>Controle de Perdas</span>
                       <span className="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-bold uppercase">
-                        Ativo
+                        Ativo / Liberado
                       </span>
                     </div>
                     <div className="text-xs text-slate-500 mt-0.5">
-                      Registro de ocorrências individuais por motivo, setor, evidência e valor estimado.
+                      Registro de ocorrências individuais por motivo, setor, evidência e peso líquido (com tara de caixas e palete).
                     </div>
                   </div>
                   <input
@@ -2434,8 +2434,8 @@ export default function AdminPage() {
                   <div>
                     <div className="font-bold text-sm text-slate-900 flex items-center gap-2">
                       <span>Separação & Distribuição de Pedidos</span>
-                      <span className="text-[10px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-bold uppercase">
-                        Não Público por Padrão
+                      <span className="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-bold uppercase">
+                        Ativo / Liberado
                       </span>
                     </div>
                     <div className="text-xs text-slate-500 mt-0.5">
@@ -2457,8 +2457,8 @@ export default function AdminPage() {
                   <div>
                     <div className="font-bold text-sm text-slate-900 flex items-center gap-2">
                       <span>Integração Excel — Atualização de Preços</span>
-                      <span className="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-bold uppercase">
-                        Requer Ativação
+                      <span className="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-bold uppercase">
+                        Ativo / Liberado
                       </span>
                     </div>
                     <div className="text-xs text-slate-500 mt-0.5">

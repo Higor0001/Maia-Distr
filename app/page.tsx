@@ -45,6 +45,7 @@ export default function Home() {
   const [weightInput, setWeightInput] = useState("")
   const [boxesCountInput, setBoxesCountInput] = useState("")
   const [tarePerBoxInput, setTarePerBoxInput] = useState("")
+  const [paleteWeightInput, setPaleteWeightInput] = useState("")
   const [dbTareByProduct, setDbTareByProduct] = useState<Record<string, number>>({})
   const [items, setItems] = useState<Item[]>([])
   const [observation, setObservation] = useState("")
@@ -88,11 +89,11 @@ export default function Home() {
   const [firstAccessLoading, setFirstAccessLoading] = useState(false)
 
   const [modulos, setModulos] = useState({
-    moduloEstoqueAtivo: false,
+    moduloEstoqueAtivo: true,
     moduloPerdasAtivo: true,
     moduloConferenciaAtivo: true,
-    moduloSeparacaoAtivo: false,
-    moduloExcelAtivo: false,
+    moduloSeparacaoAtivo: true,
+    moduloExcelAtivo: true,
   })
 
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -254,13 +255,15 @@ export default function Home() {
     const grossWeight = parseKgInput(weightInput)
     const boxes = Number.parseInt(boxesCountInput || "0", 10) || 0
     const tarePerBox = parseKgInput(tarePerBoxInput || "0") || 0
-    const totalTare = boxes > 0 && tarePerBox > 0 ? boxes * tarePerBox : 0
+    const paleteKg = Math.max(0, parseKgInput(paleteWeightInput || "0") || 0)
+    const boxTare = boxes > 0 && tarePerBox > 0 ? boxes * tarePerBox : 0
+    const totalTare = boxTare + paleteKg
     const parsedWeight = Number(Math.max(0, grossWeight - totalTare).toFixed(3))
 
     if (!productInput.trim() || Number.isNaN(grossWeight) || parsedWeight <= 0) {
       alert(
         totalTare >= grossWeight && grossWeight > 0
-          ? "O desconto de tara das caixas não pode ser maior ou igual ao peso bruto!"
+          ? "O desconto total de taras (caixas + palete) não pode ser maior ou igual ao peso bruto!"
           : "Preencha o produto e informe um peso válido em quilos (kg)"
       )
       return
@@ -276,6 +279,7 @@ export default function Home() {
     setProductInput("")
     setWeightInput("")
     setBoxesCountInput("")
+    setPaleteWeightInput("")
     setFilteredProducts([])
   }
 
@@ -1070,86 +1074,78 @@ export default function Home() {
                   ⚙️ Painel Admin
                 </Link>
               )}
-              {modulos.moduloConferenciaAtivo !== false && (
-                <Link
-                  href="/simples-conferencia"
-                  style={{
-                    color: "#ffffff",
-                    background: "#059669",
-                    fontWeight: 700,
-                    fontSize: "12px",
-                    padding: "5px 12px",
-                    borderRadius: "6px",
-                    textDecoration: "none",
-                    boxShadow: "0 2px 6px rgba(5,150,105,0.2)",
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "4px",
-                  }}
-                >
-                  ⚖️ Simples Conferência
-                </Link>
-              )}
-              {(modulos.moduloEstoqueAtivo || loggedUser?.role === "admin") && (
-                <Link
-                  href="/gerenciador-estoque"
-                  style={{
-                    color: "#ffffff",
-                    background: "#4b5563",
-                    fontWeight: 700,
-                    fontSize: "12px",
-                    padding: "5px 12px",
-                    borderRadius: "6px",
-                    textDecoration: "none",
-                    boxShadow: "0 2px 6px rgba(75,85,99,0.2)",
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "4px",
-                  }}
-                >
-                  📦 Gerenciador de Estoque
-                </Link>
-              )}
-              {(modulos.moduloSeparacaoAtivo || loggedUser?.role === "admin") && (
-                <Link
-                  href="/separacao"
-                  style={{
-                    color: "#ffffff",
-                    background: "#d97706",
-                    fontWeight: 700,
-                    fontSize: "12px",
-                    padding: "5px 12px",
-                    borderRadius: "6px",
-                    textDecoration: "none",
-                    boxShadow: "0 2px 6px rgba(217,119,6,0.2)",
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "4px",
-                  }}
-                >
-                  📋 Separação de Pedidos
-                </Link>
-              )}
-              {(modulos.moduloExcelAtivo || loggedUser?.role === "admin") && (
-                <Link
-                  href="/precos"
-                  style={{
-                    color: "#ffffff",
-                    background: "#2563eb",
-                    fontWeight: 700,
-                    fontSize: "12px",
-                    padding: "5px 12px",
-                    borderRadius: "6px",
-                    textDecoration: "none",
-                    boxShadow: "0 2px 6px rgba(37,99,235,0.2)",
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "4px",
-                  }}
-                >
-                  📊 Atualização de Preços
-                </Link>
-              )}
+              <Link
+                href="/simples-conferencia"
+                style={{
+                  color: "#ffffff",
+                  background: "#059669",
+                  fontWeight: 700,
+                  fontSize: "12px",
+                  padding: "5px 12px",
+                  borderRadius: "6px",
+                  textDecoration: "none",
+                  boxShadow: "0 2px 6px rgba(5,150,105,0.2)",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "4px",
+                }}
+              >
+                ⚖️ Simples Conferência
+              </Link>
+              <Link
+                href="/gerenciador-estoque"
+                style={{
+                  color: "#ffffff",
+                  background: "#4b5563",
+                  fontWeight: 700,
+                  fontSize: "12px",
+                  padding: "5px 12px",
+                  borderRadius: "6px",
+                  textDecoration: "none",
+                  boxShadow: "0 2px 6px rgba(75,85,99,0.2)",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "4px",
+                }}
+              >
+                📦 Gerenciador de Estoque
+              </Link>
+              <Link
+                href="/separacao"
+                style={{
+                  color: "#ffffff",
+                  background: "#d97706",
+                  fontWeight: 700,
+                  fontSize: "12px",
+                  padding: "5px 12px",
+                  borderRadius: "6px",
+                  textDecoration: "none",
+                  boxShadow: "0 2px 6px rgba(217,119,6,0.2)",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "4px",
+                }}
+              >
+                📋 Separação de Pedidos
+              </Link>
+              <Link
+                href="/precos"
+                style={{
+                  color: "#ffffff",
+                  background: "#2563eb",
+                  fontWeight: 700,
+                  fontSize: "12px",
+                  padding: "5px 12px",
+                  borderRadius: "6px",
+                  textDecoration: "none",
+                  boxShadow: "0 2px 6px rgba(37,99,235,0.2)",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "4px",
+                }}
+              >
+                📊 Atualização de Preços
+              </Link>
               <Link
                 href="/termos"
                 style={{
@@ -1422,11 +1418,75 @@ export default function Home() {
               </div>
             </div>
 
+            {/* Desconto de Peso Variável do Palete */}
+            <div
+              style={{
+                padding: "10px 12px",
+                background: "rgba(217, 119, 6, 0.08)",
+                border: "1px solid rgba(217, 119, 6, 0.3)",
+                borderRadius: "8px",
+                marginBottom: "10px",
+              }}
+            >
+              <label style={{ marginTop: 0, fontSize: "13px", color: "#92400e", fontWeight: 700 }}>
+                🪵 Peso Variável — Palete (kg, opcional):
+              </label>
+              <input
+                type="text"
+                inputMode="decimal"
+                placeholder="Ex: 18.5, 22, 25 (0 se sem palete)"
+                value={paleteWeightInput}
+                onChange={(e) => setPaleteWeightInput(e.target.value)}
+                style={{ marginBottom: "6px" }}
+              />
+              <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+                <button
+                  type="button"
+                  onClick={() => setPaleteWeightInput("")}
+                  style={{
+                    width: "auto",
+                    background: !paleteWeightInput ? "#92400e" : "#ffffff",
+                    color: !paleteWeightInput ? "#ffffff" : "#92400e",
+                    border: "1px solid #d97706",
+                    padding: "4px 10px",
+                    borderRadius: "6px",
+                    fontSize: "11px",
+                    fontWeight: 700,
+                    marginTop: 0,
+                  }}
+                >
+                  Sem Palete (0 kg)
+                </button>
+                {["12", "15", "18", "20", "22", "25", "28", "30"].map((preset) => (
+                  <button
+                    key={preset}
+                    type="button"
+                    onClick={() => setPaleteWeightInput(preset)}
+                    style={{
+                      width: "auto",
+                      background: paleteWeightInput === preset ? "#d97706" : "#fffbeb",
+                      color: paleteWeightInput === preset ? "#ffffff" : "#92400e",
+                      border: "1px solid #f59e0b",
+                      padding: "4px 10px",
+                      borderRadius: "6px",
+                      fontSize: "11px",
+                      fontWeight: 700,
+                      marginTop: 0,
+                    }}
+                  >
+                    🪵 {preset} kg
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {(() => {
               const g = parseKgInput(weightInput || "0") || 0
               const b = Number.parseInt(boxesCountInput || "0", 10) || 0
               const t = parseKgInput(tarePerBoxInput || "0") || 0
-              const discount = b > 0 && t > 0 ? b * t : 0
+              const p = Math.max(0, parseKgInput(paleteWeightInput || "0") || 0)
+              const boxDiscount = b > 0 && t > 0 ? b * t : 0
+              const discount = boxDiscount + p
               if (g > 0 && discount > 0) {
                 const net = Math.max(0, g - discount)
                 return (
@@ -1441,8 +1501,9 @@ export default function Home() {
                       fontWeight: 600,
                     }}
                   >
-                    ⚖️ Peso Bruto: {formatKg(g)} kg − Tara ({b}x {formatKg(t)} kg ={" "}
-                    {formatKg(discount)} kg) ➡️{" "}
+                    ⚖️ Peso Bruto: {formatKg(g)} kg
+                    {boxDiscount > 0 && ` − Caixas (${b}x ${formatKg(t)} = ${formatKg(boxDiscount)} kg)`}
+                    {p > 0 && ` − Palete (${formatKg(p)} kg)`} ➡️{" "}
                     <strong>Peso Líquido: {formatKg(net)} kg</strong>
                   </div>
                 )
@@ -1632,66 +1693,58 @@ export default function Home() {
             >
               ⚙️ Configurações
             </button>
-            {modulos.moduloConferenciaAtivo !== false && (
-              <button
-                onClick={() => {
-                  window.location.href = "/simples-conferencia"
-                }}
-                style={{
-                  flex: 1,
-                  minWidth: "140px",
-                  background: "#059669",
-                  marginTop: "0",
-                }}
-              >
-                ⚖️ Simples Conferência
-              </button>
-            )}
-            {(modulos.moduloEstoqueAtivo || loggedUser?.role === "admin") && (
-              <button
-                onClick={() => {
-                  window.location.href = "/gerenciador-estoque"
-                }}
-                style={{
-                  flex: 1,
-                  minWidth: "140px",
-                  background: "#4b5563",
-                  marginTop: "0",
-                }}
-              >
-                📦 Estoque
-              </button>
-            )}
-            {(modulos.moduloSeparacaoAtivo || loggedUser?.role === "admin") && (
-              <button
-                onClick={() => {
-                  window.location.href = "/separacao"
-                }}
-                style={{
-                  flex: 1,
-                  minWidth: "140px",
-                  background: "#d97706",
-                  marginTop: "0",
-                }}
-              >
-                📋 Separação
-              </button>
-            )}
-            {(modulos.moduloExcelAtivo || loggedUser?.role === "admin") && (
-              <button
-                onClick={() => {
-                  window.location.href = "/precos"
-                }}
-                style={{
-                  flex: 1,
-                  minWidth: "140px",
-                  background: "#2563eb",
-                  marginTop: "0",
-                }}
-              >
-                📊 Preços
-              </button>
-            )}
+            <button
+              onClick={() => {
+                window.location.href = "/simples-conferencia"
+              }}
+              style={{
+                flex: 1,
+                minWidth: "140px",
+                background: "#059669",
+                marginTop: "0",
+              }}
+            >
+              ⚖️ Simples Conferência
+            </button>
+            <button
+              onClick={() => {
+                window.location.href = "/gerenciador-estoque"
+              }}
+              style={{
+                flex: 1,
+                minWidth: "140px",
+                background: "#4b5563",
+                marginTop: "0",
+              }}
+            >
+              📦 Estoque
+            </button>
+            <button
+              onClick={() => {
+                window.location.href = "/separacao"
+              }}
+              style={{
+                flex: 1,
+                minWidth: "140px",
+                background: "#d97706",
+                marginTop: "0",
+              }}
+            >
+              📋 Separação
+            </button>
+            <button
+              onClick={() => {
+                window.location.href = "/precos"
+              }}
+              style={{
+                flex: 1,
+                minWidth: "140px",
+                background: "#2563eb",
+                marginTop: "0",
+              }}
+            >
+              📊 Preços
+            </button>
           </div>
         </div>
       </div>
@@ -2098,51 +2151,58 @@ export default function Home() {
             >
               ⚙️ Configurações
             </button>
-            {modulos.moduloConferenciaAtivo !== false && (
-              <button
-                onClick={() => {
-                  window.location.href = "/simples-conferencia"
-                }}
-                style={{
-                  flex: 1,
-                  minWidth: "140px",
-                  background: "#059669",
-                  marginTop: "0",
-                }}
-              >
-                ⚖️ Simples Conferência
-              </button>
-            )}
-            {(modulos.moduloEstoqueAtivo || loggedUser?.role === "admin") && (
-              <button
-                onClick={() => {
-                  window.location.href = "/gerenciador-estoque"
-                }}
-                style={{
-                  flex: 1,
-                  minWidth: "140px",
-                  background: "#4b5563",
-                  marginTop: "0",
-                }}
-              >
-                📦 Estoque
-              </button>
-            )}
-            {(modulos.moduloSeparacaoAtivo || loggedUser?.role === "admin") && (
-              <button
-                onClick={() => {
-                  window.location.href = "/separacao"
-                }}
-                style={{
-                  flex: 1,
-                  minWidth: "140px",
-                  background: "#d97706",
-                  marginTop: "0",
-                }}
-              >
-                📋 Separação
-              </button>
-            )}
+            <button
+              onClick={() => {
+                window.location.href = "/simples-conferencia"
+              }}
+              style={{
+                flex: 1,
+                minWidth: "140px",
+                background: "#059669",
+                marginTop: "0",
+              }}
+            >
+              ⚖️ Simples Conferência
+            </button>
+            <button
+              onClick={() => {
+                window.location.href = "/gerenciador-estoque"
+              }}
+              style={{
+                flex: 1,
+                minWidth: "140px",
+                background: "#4b5563",
+                marginTop: "0",
+              }}
+            >
+              📦 Estoque
+            </button>
+            <button
+              onClick={() => {
+                window.location.href = "/separacao"
+              }}
+              style={{
+                flex: 1,
+                minWidth: "140px",
+                background: "#d97706",
+                marginTop: "0",
+              }}
+            >
+              📋 Separação
+            </button>
+            <button
+              onClick={() => {
+                window.location.href = "/precos"
+              }}
+              style={{
+                flex: 1,
+                minWidth: "140px",
+                background: "#2563eb",
+                marginTop: "0",
+              }}
+            >
+              📊 Preços
+            </button>
           </div>
         </div>
       </div>
@@ -2349,36 +2409,58 @@ export default function Home() {
           >
             📜 Histórico
           </button>
-          {modulos.moduloConferenciaAtivo !== false && (
-            <button
-              onClick={() => {
-                window.location.href = "/simples-conferencia"
-              }}
-              style={{
-                flex: 1,
-                minWidth: "140px",
-                background: "#059669",
-                marginTop: "0",
-              }}
-            >
-              ⚖️ Simples Conferência
-            </button>
-          )}
-          {(modulos.moduloEstoqueAtivo || loggedUser?.role === "admin") && (
-            <button
-              onClick={() => {
-                window.location.href = "/gerenciador-estoque"
-              }}
-              style={{
-                flex: 1,
-                minWidth: "140px",
-                background: "#4b5563",
-                marginTop: "0",
-              }}
-            >
-              📦 Estoque
-            </button>
-          )}
+          <button
+            onClick={() => {
+              window.location.href = "/simples-conferencia"
+            }}
+            style={{
+              flex: 1,
+              minWidth: "140px",
+              background: "#059669",
+              marginTop: "0",
+            }}
+          >
+            ⚖️ Simples Conferência
+          </button>
+          <button
+            onClick={() => {
+              window.location.href = "/gerenciador-estoque"
+            }}
+            style={{
+              flex: 1,
+              minWidth: "140px",
+              background: "#4b5563",
+              marginTop: "0",
+            }}
+          >
+            📦 Estoque
+          </button>
+          <button
+            onClick={() => {
+              window.location.href = "/separacao"
+            }}
+            style={{
+              flex: 1,
+              minWidth: "140px",
+              background: "#d97706",
+              marginTop: "0",
+            }}
+          >
+            📋 Separação
+          </button>
+          <button
+            onClick={() => {
+              window.location.href = "/precos"
+            }}
+            style={{
+              flex: 1,
+              minWidth: "140px",
+              background: "#2563eb",
+              marginTop: "0",
+            }}
+          >
+            📊 Preços
+          </button>
         </div>
       </div>
     </div>

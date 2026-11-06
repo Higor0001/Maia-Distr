@@ -34,12 +34,12 @@
     "notificacoesAtivas": true
   },
   "modulos": {
-    "moduloEstoqueAtivo": false,
+    "moduloEstoqueAtivo": true,
     "moduloPerdasAtivo": true,
     "moduloConferenciaAtivo": true,
-    "moduloSeparacaoAtivo": false,
-    "moduloExcelAtivo": false,
-    "moduloCloudR2Ativo": false,
-    "moduloSyncAgentAtivo": false
+    "moduloSeparacaoAtivo": true,
+    "moduloExcelAtivo": true,
+    "moduloCloudR2Ativo": true,
+    "moduloSyncAgentAtivo": true
   }
 }

@@ -1,7 +1,6 @@
 "use client"
 
 import React, { useState, useEffect, useMemo } from "react"
-import Link from "next/link"
 import { NavHeader } from "@/components/layout/nav-header"
 import {
   Layers,
@@ -16,7 +15,6 @@ import {
   AlertCircle,
   RefreshCw,
   Plus,
-  Lock,
   Box,
   ShoppingCart,
   ShieldCheck,
@@ -31,9 +29,6 @@ export default function SeparacaoPage() {
     unidade?: string
     role?: string
   } | null>(null)
-
-  const [moduloSeparacaoAtivo, setModuloSeparacaoAtivo] = useState(false)
-  const [loadingConfig, setLoadingConfig] = useState(true)
 
   // Modos dos 4 Tablets
   const [tabletMode, setTabletMode] = useState<"conferente" | "balanca" | "separador" | "setor15">(
@@ -61,6 +56,7 @@ export default function SeparacaoPage() {
   const [pesoBrutoInput, setPesoBrutoInput] = useState("")
   const [selectedCarrinhoId, setSelectedCarrinhoId] = useState("")
   const [selectedCaixaId, setSelectedCaixaId] = useState("")
+  const [paleteTaraInput, setPaleteTaraInput] = useState("")
   const [pesagemObs, setPesagemObs] = useState("")
 
   // Redistribuição
@@ -75,7 +71,7 @@ export default function SeparacaoPage() {
   const [msgFeedback, setMsgFeedback] = useState("")
   const [loadingAction, setLoadingAction] = useState(false)
 
-  // 1. Carregar Sessão e Configurações
+  // 1. Carregar Sessão
   useEffect(() => {
     fetch("/api/session")
       .then((res) => (res.ok ? res.json() : null))
@@ -85,16 +81,6 @@ export default function SeparacaoPage() {
         }
       })
       .catch(() => {})
-
-    fetch("/api/admin/settings")
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (data?.settings?.modulos?.moduloSeparacaoAtivo) {
-          setModuloSeparacaoAtivo(true)
-        }
-      })
-      .catch(() => {})
-      .finally(() => setLoadingConfig(false))
   }, [])
 
   // 2. Carregar Pedidos e Dados Operacionais
@@ -129,10 +115,8 @@ export default function SeparacaoPage() {
   }
 
   useEffect(() => {
-    if (!loadingConfig && (moduloSeparacaoAtivo || user?.role === "admin")) {
-      carregarDados()
-    }
-  }, [loadingConfig, moduloSeparacaoAtivo, user])
+    carregarDados()
+  }, [])
 
   // Fallback de Ajudantes caso banco não tenha outros cadastros
   const ajudantesLista = useMemo(() => {
@@ -145,10 +129,11 @@ export default function SeparacaoPage() {
     ]
   }, [usuariosAjudantes])
 
-  // Cálculo de Tara para Pesagem
+  // Cálculo de Tara para Pesagem (incluindo Peso Variável do Palete)
   const cTara = carrinhos.find((c) => c.id === selectedCarrinhoId)?.taraKg || 0
   const cxTara = caixas.find((c) => c.id === selectedCaixaId)?.taraKg || 0
-  const taraTotal = Number((cTara + cxTara).toFixed(3))
+  const paleteTara = Math.max(0, parseFloat(paleteTaraInput.replace(",", ".")) || 0)
+  const taraTotal = Number((cTara + cxTara + paleteTara).toFixed(3))
   const pBruto = parseFloat(pesoBrutoInput.replace(",", ".")) || 0
   const pLiquido = Math.max(0, Number((pBruto - taraTotal).toFixed(3)))
 
@@ -223,6 +208,13 @@ export default function SeparacaoPage() {
     if (!tarefaSelecionadaPesagem || pBruto <= 0) return
     setLoadingAction(true)
     try {
+      const obsComPalete = [
+        paleteTara > 0 ? `[Palete: -${paleteTara.toFixed(2)}kg]` : "",
+        pesagemObs,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .trim()
       const res = await fetch("/api/separacao/tarefas", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -233,7 +225,7 @@ export default function SeparacaoPage() {
           pesoBruto: pBruto,
           taraTotal,
           pesoLiquido: pLiquido,
-          observacao: pesagemObs,
+          observacao: obsComPalete,
         }),
       })
       const data = await res.json()
@@ -241,6 +233,7 @@ export default function SeparacaoPage() {
         setMsgFeedback(`Pesagem registrada: ${pBruto.toFixed(2)} kg → ${pLiquido.toFixed(2)} kg.`)
         setTarefaSelecionadaPesagem(null)
         setPesoBrutoInput("")
+        setPaleteTaraInput("")
         setPesagemObs("")
         carregarDados()
       }
@@ -310,34 +303,6 @@ export default function SeparacaoPage() {
     }
   }
 
-  // PROTEÇÃO: MÓDULO NÃO PÚBLICO
-  if (!loadingConfig && !moduloSeparacaoAtivo && user?.role !== "admin") {
-    return (
-      <div className="min-h-screen bg-slate-100 flex flex-col items-center justify-center p-6 text-center font-sans">
-        <div className="max-w-md w-full bg-white rounded-3xl p-8 shadow-xl border border-slate-200 space-y-5">
-          <div className="w-16 h-16 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center mx-auto text-2xl font-bold">
-            <Lock className="w-8 h-8 text-amber-700" />
-          </div>
-          <div className="space-y-2">
-            <h1 className="text-xl font-black text-slate-900">Módulo Não Público</h1>
-            <p className="text-sm text-slate-600 leading-relaxed">
-              O módulo de Separação e Distribuição de Pedidos está pronto na base de código, mas requer
-              ativação formal nas configurações do sistema ou credenciais de Administrador.
-            </p>
-          </div>
-          <div className="pt-2 flex flex-col gap-2.5">
-            <Link
-              href="/simples-conferencia"
-              className="w-full py-3 px-4 bg-[#1a2a6c] text-white font-bold rounded-xl text-sm transition-all shadow"
-            >
-              Voltar para Simples Conferência
-            </Link>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 flex flex-col font-sans">
       <NavHeader user={user} />
@@ -355,11 +320,6 @@ export default function SeparacaoPage() {
                   <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
                     Separação & Distribuição de Pedidos
                   </h1>
-                  {!moduloSeparacaoAtivo && (
-                    <span className="text-[10px] bg-amber-500 text-white font-bold px-2 py-0.5 rounded-full uppercase">
-                      Modo Prévia Admin
-                    </span>
-                  )}
                 </div>
                 <p className="text-xs sm:text-sm text-slate-500">
                   Distribuição por produto, sorteio automatizado e pesagem vinculada aos ajudantes operacionais.
@@ -666,8 +626,8 @@ export default function SeparacaoPage() {
                     </div>
                   </div>
 
-                  {/* Taras Carrinho e Caixa */}
-                  <div className="grid grid-cols-2 gap-3">
+                  {/* Taras Carrinho, Caixa e Peso Variável (Palete) */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div>
                       <label className="text-xs font-bold text-slate-500">Carrinho</label>
                       <select
@@ -699,21 +659,47 @@ export default function SeparacaoPage() {
                         ))}
                       </select>
                     </div>
+
+                    <div>
+                      <label className="text-xs font-bold text-slate-500">
+                        🪵 Palete (Peso Variável kg)
+                      </label>
+                      <input
+                        type="text"
+                        inputMode="decimal"
+                        placeholder="Ex: 22.5"
+                        value={paleteTaraInput}
+                        onChange={(e) => setPaleteTaraInput(e.target.value)}
+                        className="w-full mt-1 p-2 text-xs font-bold border border-slate-300 rounded-lg outline-none font-mono"
+                      />
+                    </div>
                   </div>
 
                   {/* Display Bruto -> Líquido */}
-                  <div className="bg-[#1a2a6c] text-white p-4 rounded-xl flex items-center justify-between">
-                    <div>
-                      <div className="text-[10px] uppercase text-blue-200">Bruto</div>
-                      <div className="text-xl font-mono font-bold">{pBruto.toFixed(2)} kg</div>
-                    </div>
-                    <ArrowRight className="w-5 h-5 text-amber-400" />
-                    <div>
-                      <div className="text-[10px] uppercase text-amber-300">Líquido</div>
-                      <div className="text-2xl font-mono font-black text-amber-300">
-                        {pLiquido.toFixed(2)} kg
+                  <div className="bg-[#1a2a6c] text-white p-4 rounded-xl space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="text-[10px] uppercase text-blue-200">Bruto</div>
+                        <div className="text-xl font-mono font-bold">{pBruto.toFixed(2)} kg</div>
+                      </div>
+                      <ArrowRight className="w-5 h-5 text-amber-400" />
+                      <div className="text-right">
+                        <div className="text-[10px] uppercase text-amber-300">Líquido</div>
+                        <div className="text-2xl font-mono font-black text-amber-300">
+                          {pLiquido.toFixed(2)} kg
+                        </div>
                       </div>
                     </div>
+                    {taraTotal > 0 && (
+                      <div className="text-[11px] text-blue-200 border-t border-white/15 pt-1.5 flex justify-between">
+                        <span>
+                          Desconto Taras{paleteTara > 0 ? ` (inclui Palete -${paleteTara.toFixed(2)} kg)` : ""}:
+                        </span>
+                        <span className="font-mono font-bold text-amber-300">
+                          -{taraTotal.toFixed(2)} kg
+                        </span>
+                      </div>
+                    )}
                   </div>
 
                   <button

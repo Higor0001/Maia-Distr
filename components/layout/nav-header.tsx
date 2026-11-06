@@ -54,42 +54,30 @@ export function NavHeader({ user, onLogout }: NavHeaderProps) {
       badge: null,
       badgeColor: "",
     },
-    ...(modulos.moduloEstoqueAtivo || user?.role === "admin"
-      ? [
-          {
-            href: "/gerenciador-estoque",
-            label: "Gerenciador de Estoque",
-            icon: Package,
-            active: pathname.startsWith("/gerenciador-estoque"),
-            badge: !modulos.moduloEstoqueAtivo ? "Admin" : null,
-            badgeColor: "bg-slate-500",
-          },
-        ]
-      : []),
-    ...(modulos.moduloSeparacaoAtivo || user?.role === "admin"
-      ? [
-          {
-            href: "/separacao",
-            label: "Separação de Pedidos",
-            icon: Layers,
-            active: pathname.startsWith("/separacao"),
-            badge: !modulos.moduloSeparacaoAtivo ? "Admin / Prévia" : null,
-            badgeColor: "bg-amber-500",
-          },
-        ]
-      : []),
-    ...(modulos.moduloExcelAtivo || user?.role === "admin"
-      ? [
-          {
-            href: "/precos",
-            label: "Atualização de Preços",
-            icon: FileSpreadsheet,
-            active: pathname.startsWith("/precos"),
-            badge: !modulos.moduloExcelAtivo ? "Admin" : null,
-            badgeColor: "bg-blue-500",
-          },
-        ]
-      : []),
+    {
+      href: "/gerenciador-estoque",
+      label: "Gerenciador de Estoque",
+      icon: Package,
+      active: pathname.startsWith("/gerenciador-estoque"),
+      badge: null,
+      badgeColor: "",
+    },
+    {
+      href: "/separacao",
+      label: "Separação de Pedidos",
+      icon: Layers,
+      active: pathname.startsWith("/separacao"),
+      badge: null,
+      badgeColor: "",
+    },
+    {
+      href: "/precos",
+      label: "Atualização de Preços",
+      icon: FileSpreadsheet,
+      active: pathname.startsWith("/precos"),
+      badge: null,
+      badgeColor: "",
+    },
     ...(user?.role === "admin"
       ? [
           {

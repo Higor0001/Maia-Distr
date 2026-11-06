@@ -222,21 +222,6 @@ class SimpleA4Pdf {
 }
 
 export default function GerenciadorEstoquePage() {
-  const [moduloEstoqueAtivo, setModuloEstoqueAtivo] = useState(false)
-  const [loadingModuloConfig, setLoadingModuloConfig] = useState(true)
-
-  useEffect(() => {
-    fetch("/api/modulos")
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (data?.modulos?.moduloEstoqueAtivo) {
-          setModuloEstoqueAtivo(true)
-        }
-      })
-      .catch(() => {})
-      .finally(() => setLoadingModuloConfig(false))
-  }, [])
-
   const [scope, setScope] = useState<"filial" | "matriz">("filial")
   const [date, setDate] = useState("")
   const [contador, setContador] = useState("")
@@ -263,6 +248,8 @@ export default function GerenciadorEstoquePage() {
   const [maturacao, setMaturacao] = useState<Record<string, MaturacaoStatus>>({})
   // Quantidade de caixas para cálculo de Tara (quando item é contado em kg)
   const [caixasTara, setCaixasTara] = useState<Record<string, string>>({})
+  // Peso variável do Palete (kg) para desconto na pesagem de itens em kg
+  const [paleteTaraKg, setPaleteTaraKg] = useState<Record<string, string>>({})
 
   const [isSaving, setIsSaving] = useState(false)
   const [saveError, setSaveError] = useState("")
@@ -812,6 +799,81 @@ export default function GerenciadorEstoquePage() {
               </div>
             </div>
           )}
+
+          {(hasTare || item.tipoUnidade === "kg") && (
+            <div className="field">
+              <span>🪵 Peso Variável — Palete (kg)</span>
+              <div className="stepper">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setPaleteTaraKg((prev) => ({
+                      ...prev,
+                      [item.reduzido]: stepValue(prev[item.reduzido], -1),
+                    }))
+                  }
+                >
+                  -
+                </button>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  placeholder="Ex: 18, 22, 25"
+                  value={paleteTaraKg[item.reduzido] || ""}
+                  onChange={(e) =>
+                    setPaleteTaraKg((prev) => ({
+                      ...prev,
+                      [item.reduzido]: sanitizeExpression(e.target.value),
+                    }))
+                  }
+                  onBlur={(e) =>
+                    setPaleteTaraKg((prev) => ({
+                      ...prev,
+                      [item.reduzido]: normalizeNumericString(e.target.value),
+                    }))
+                  }
+                />
+                <button
+                  type="button"
+                  onClick={() =>
+                    setPaleteTaraKg((prev) => ({
+                      ...prev,
+                      [item.reduzido]: stepValue(prev[item.reduzido], 1),
+                    }))
+                  }
+                >
+                  +
+                </button>
+              </div>
+              <div style={{ display: "flex", gap: "4px", marginTop: "4px", flexWrap: "wrap" }}>
+                {(["0", "15", "18", "20", "22", "25", "30"] as const).map((preset) => (
+                  <button
+                    key={preset}
+                    type="button"
+                    onClick={() =>
+                      setPaleteTaraKg((prev) => ({
+                        ...prev,
+                        [item.reduzido]: preset === "0" ? "" : preset,
+                      }))
+                    }
+                    style={{
+                      flex: 1,
+                      padding: "4px 4px",
+                      fontSize: "11px",
+                      fontWeight: 700,
+                      background: "#fffbeb",
+                      color: "#92400e",
+                      border: "1px solid #f59e0b",
+                      borderRadius: "6px",
+                      marginTop: 0,
+                    }}
+                  >
+                    {preset}kg
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     )
@@ -874,7 +936,8 @@ export default function GerenciadorEstoquePage() {
       calcAreaTotal(item, pickingFardos, pickingPallets) +
       calcAreaTotal(item, avariaFardos, avariaPallets)
     const tareBoxes = evaluateExpression(caixasTara[item.reduzido] || "0")
-    const tareDiscount = tareBoxes * (Number(item.taraKg) || 0)
+    const paleteKg = evaluateExpression(paleteTaraKg[item.reduzido] || "0")
+    const tareDiscount = tareBoxes * (Number(item.taraKg) || 0) + paleteKg
     return Math.max(0, Number((gross - tareDiscount).toFixed(2)))
   }
 
@@ -1748,107 +1811,6 @@ export default function GerenciadorEstoquePage() {
     }
   }
 
-  if (!loadingModuloConfig && !moduloEstoqueAtivo) {
-    return (
-      <div
-        style={{
-          minHeight: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          padding: "20px",
-          background: "#f1f5f9",
-          fontFamily: "system-ui, sans-serif",
-        }}
-      >
-        <div
-          style={{
-            maxWidth: "460px",
-            width: "100%",
-            background: "#ffffff",
-            borderRadius: "20px",
-            padding: "32px",
-            boxShadow: "0 10px 25px rgba(0,0,0,0.08)",
-            border: "1px solid #e2e8f0",
-            textAlign: "center",
-          }}
-        >
-          <div
-            style={{
-              width: "60px",
-              height: "60px",
-              borderRadius: "16px",
-              background: "#fef3c7",
-              color: "#b45309",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: "28px",
-              margin: "0 auto 16px auto",
-            }}
-          >
-            🔒
-          </div>
-          <h1
-            style={{
-              fontSize: "18px",
-              fontWeight: 800,
-              color: "#0f172a",
-              marginBottom: "8px",
-            }}
-          >
-            Módulo de Estoque Desativado
-          </h1>
-          <p
-            style={{
-              fontSize: "13px",
-              color: "#64748b",
-              lineHeight: 1.6,
-              marginBottom: "24px",
-            }}
-          >
-            O gerenciamento de estoque está desativado durante a primeira etapa
-            operacional da Maia Distribuidora. Todos os registros anteriores e o
-            catálogo mestre de produtos continuam protegidos e preservados.
-          </p>
-          <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-            <Link
-              href="/simples-conferencia"
-              style={{
-                display: "block",
-                padding: "12px",
-                background: "#1a2a6c",
-                color: "#ffffff",
-                fontWeight: 700,
-                fontSize: "13px",
-                borderRadius: "12px",
-                textDecoration: "none",
-              }}
-            >
-              Acessar Simples Conferência & Pesagem
-            </Link>
-            <Link
-              href="/perdas"
-              style={{
-                display: "block",
-                padding: "12px",
-                background: "#f8fafc",
-                color: "#334155",
-                fontWeight: 600,
-                fontSize: "13px",
-                borderRadius: "12px",
-                border: "1px solid #cbd5e1",
-                textDecoration: "none",
-              }}
-            >
-              Acessar Módulo de Perdas
-            </Link>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
   return (
     <div className={`stock-shell${fullScreenMode ? " full" : ""}`}>
       <div className={`stock-card${fullScreenMode ? " full" : ""}`}>
@@ -1892,11 +1854,71 @@ export default function GerenciadorEstoquePage() {
                 className="stock-subtitle"
                 style={{ textAlign: "left", color: "#e2e8f0" }}
               >
-                Contagem direta em Caixas e Sacos (sem lastro ou avulsos)
+                Contagem direta em Caixas e Sacos (com desconto de tara de caixas e peso variável de palete)
               </div>
             </div>
           </div>
           <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
+            <Link
+              href="/simples-conferencia"
+              style={{
+                background: "#059669",
+                color: "#ffffff",
+                padding: "9px 12px",
+                borderRadius: "10px",
+                fontSize: "12px",
+                fontWeight: 700,
+                textDecoration: "none",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
+              }}
+            >
+              ⚖️ Simples Conferência
+            </Link>
+            <Link
+              href="/separacao"
+              style={{
+                background: "#d97706",
+                color: "#ffffff",
+                padding: "9px 12px",
+                borderRadius: "10px",
+                fontSize: "12px",
+                fontWeight: 700,
+                textDecoration: "none",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
+              }}
+            >
+              📋 Separação
+            </Link>
+            <Link
+              href="/precos"
+              style={{
+                background: "#2563eb",
+                color: "#ffffff",
+                padding: "9px 12px",
+                borderRadius: "10px",
+                fontSize: "12px",
+                fontWeight: 700,
+                textDecoration: "none",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
+              }}
+            >
+              📊 Preços
+            </Link>
+            <Link
+              href="/"
+              style={{
+                background: "rgba(255, 255, 255, 0.95)",
+                color: "#1a2a6c",
+                padding: "9px 14px",
+                borderRadius: "10px",
+                fontSize: "12px",
+                fontWeight: 700,
+                textDecoration: "none",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
+              }}
+            >
+              🥬 Controle de Perdas
+            </Link>
             <Link
               href="/admin"
               style={{
@@ -1928,21 +1950,6 @@ export default function GerenciadorEstoquePage() {
               }}
             >
               📄 Termos
-            </Link>
-            <Link
-              href="/"
-              style={{
-                background: "rgba(255, 255, 255, 0.95)",
-                color: "#1a2a6c",
-                padding: "9px 14px",
-                borderRadius: "10px",
-                fontSize: "12px",
-                fontWeight: 700,
-                textDecoration: "none",
-                boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
-              }}
-            >
-              🥬 Ir para Controle de Perdas
             </Link>
           </div>
         </div>

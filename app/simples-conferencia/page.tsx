@@ -26,6 +26,7 @@ interface ConferenciaRecord {
   tipoCarrinhoId?: string
   tipoCarrinhoNome?: string
   taraCarrinhoKg: number
+  taraPaleteKg?: number
   tipoCaixaId?: string
   tipoCaixaNome?: string
   quantidadeCaixas?: number
@@ -44,6 +45,7 @@ interface ConferenciaItemTemp {
   tipoCarrinhoId?: string
   tipoCarrinhoNome?: string
   taraCarrinhoKg: number
+  taraPaleteKg: number
   tipoCaixaId?: string
   tipoCaixaNome?: string
   quantidadeCaixas: number
@@ -61,11 +63,11 @@ export default function SimplesConferenciaPage() {
   const [connectionStatus, setConnectionStatus] = useState("online")
 
   const [modulos, setModulos] = useState({
-    moduloEstoqueAtivo: false,
+    moduloEstoqueAtivo: true,
     moduloPerdasAtivo: true,
     moduloConferenciaAtivo: true,
-    moduloSeparacaoAtivo: false,
-    moduloExcelAtivo: false,
+    moduloSeparacaoAtivo: true,
+    moduloExcelAtivo: true,
   })
 
   // Catálogos e Cadastros
@@ -84,6 +86,7 @@ export default function SimplesConferenciaPage() {
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([])
   const [pesoBrutoInput, setPesoBrutoInput] = useState("")
   const [selectedCarrinhoId, setSelectedCarrinhoId] = useState<string>("")
+  const [taraPaleteInput, setTaraPaleteInput] = useState<string>("")
   const [selectedCaixaId, setSelectedCaixaId] = useState<string>("")
   const [quantidadeCaixasInput, setQuantidadeCaixasInput] = useState<string>("1")
   const [observacao, setObservacao] = useState("")
@@ -216,10 +219,11 @@ export default function SimplesConferenciaPage() {
   )
 
   const taraCarrinho = selectedCarrinho ? selectedCarrinho.taraKg : 0
+  const taraPalete = Math.max(0, parseFloat(taraPaleteInput.replace(",", ".")) || 0)
   const taraCaixaUnitaria = selectedCaixa ? selectedCaixa.taraKg : 0
   const qtdCaixasNum = selectedCaixaId ? Math.max(1, parseInt(quantidadeCaixasInput, 10) || 1) : 0
   const taraCaixasTotal = Number((taraCaixaUnitaria * qtdCaixasNum).toFixed(3))
-  const taraTotal = Number((taraCarrinho + taraCaixasTotal).toFixed(3))
+  const taraTotal = Number((taraCarrinho + taraPalete + taraCaixasTotal).toFixed(3))
 
   const pesoBrutoNum = parseFloat(pesoBrutoInput.replace(",", ".")) || 0
   const pesoLiquidoNum = Math.max(0, Number((pesoBrutoNum - taraTotal).toFixed(3)))
@@ -314,6 +318,7 @@ export default function SimplesConferenciaPage() {
       tipoCarrinhoId: selectedCarrinho?.id || "",
       tipoCarrinhoNome: selectedCarrinho?.nome || "",
       taraCarrinhoKg: taraCarrinho,
+      taraPaleteKg: taraPalete,
       tipoCaixaId: selectedCaixa?.id || "",
       tipoCaixaNome: selectedCaixa?.nome || "",
       quantidadeCaixas: qtdCaixasNum,
@@ -331,6 +336,7 @@ export default function SimplesConferenciaPage() {
     setProductInput("")
     setSelectedProduct(null)
     setPesoBrutoInput("")
+    setTaraPaleteInput("")
   }
 
   const handleRemoveItem = (id: string) => {
@@ -372,6 +378,7 @@ export default function SimplesConferenciaPage() {
         setProductInput("")
         setSelectedProduct(null)
         setPesoBrutoInput("")
+        setTaraPaleteInput("")
         setObservacao("")
         setPhotoPreview("")
       } catch (err: any) {
@@ -402,6 +409,7 @@ export default function SimplesConferenciaPage() {
         tipoCarrinhoId: selectedCarrinho?.id || "",
         tipoCarrinhoNome: selectedCarrinho?.nome || "",
         taraCarrinhoKg: taraCarrinho,
+        taraPaleteKg: taraPalete,
         tipoCaixaId: selectedCaixa?.id || "",
         tipoCaixaNome: selectedCaixa?.nome || "",
         quantidadeCaixas: qtdCaixasNum,
@@ -433,6 +441,7 @@ export default function SimplesConferenciaPage() {
       setProductInput("")
       setSelectedProduct(null)
       setPesoBrutoInput("")
+      setTaraPaleteInput("")
       setObservacao("")
       setPhotoPreview("")
     } catch (err: any) {
@@ -512,6 +521,7 @@ export default function SimplesConferenciaPage() {
       "Peso Bruto (kg)",
       "Carrinho",
       "Tara Carrinho (kg)",
+      "Tara Palete (kg)",
       "Caixa",
       "Qtd Caixas",
       "Tara Caixas Total (kg)",
@@ -525,6 +535,7 @@ export default function SimplesConferenciaPage() {
       (c.pesoBruto || 0).toFixed(3),
       `"${c.tipoCarrinhoNome || "Nenhum"}"`,
       (c.taraCarrinhoKg || 0).toFixed(3),
+      (c.taraPaleteKg || 0).toFixed(3),
       `"${c.tipoCaixaNome || "Nenhuma"}"`,
       c.quantidadeCaixas || 1,
       (c.taraCaixaKg || 0).toFixed(3),
@@ -627,68 +638,62 @@ export default function SimplesConferenciaPage() {
               ⚠️ Controle de Perdas
             </Link>
 
-            {(modulos.moduloEstoqueAtivo || loggedUser?.role === "admin") && (
-              <Link
-                href="/gerenciador-estoque"
-                style={{
-                  color: "#ffffff",
-                  background: "#4b5563",
-                  fontWeight: 700,
-                  fontSize: "12px",
-                  padding: "5px 12px",
-                  borderRadius: "6px",
-                  textDecoration: "none",
-                  boxShadow: "0 2px 6px rgba(75,85,99,0.2)",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "4px",
-                }}
-              >
-                📦 Gerenciador de Estoque
-              </Link>
-            )}
+            <Link
+              href="/gerenciador-estoque"
+              style={{
+                color: "#ffffff",
+                background: "#4b5563",
+                fontWeight: 700,
+                fontSize: "12px",
+                padding: "5px 12px",
+                borderRadius: "6px",
+                textDecoration: "none",
+                boxShadow: "0 2px 6px rgba(75,85,99,0.2)",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "4px",
+              }}
+            >
+              📦 Gerenciador de Estoque
+            </Link>
 
-            {(modulos.moduloSeparacaoAtivo || loggedUser?.role === "admin") && (
-              <Link
-                href="/separacao"
-                style={{
-                  color: "#ffffff",
-                  background: "#d97706",
-                  fontWeight: 700,
-                  fontSize: "12px",
-                  padding: "5px 12px",
-                  borderRadius: "6px",
-                  textDecoration: "none",
-                  boxShadow: "0 2px 6px rgba(217,119,6,0.2)",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "4px",
-                }}
-              >
-                📋 Separação de Pedidos
-              </Link>
-            )}
+            <Link
+              href="/separacao"
+              style={{
+                color: "#ffffff",
+                background: "#d97706",
+                fontWeight: 700,
+                fontSize: "12px",
+                padding: "5px 12px",
+                borderRadius: "6px",
+                textDecoration: "none",
+                boxShadow: "0 2px 6px rgba(217,119,6,0.2)",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "4px",
+              }}
+            >
+              📋 Separação de Pedidos
+            </Link>
 
-            {(modulos.moduloExcelAtivo || loggedUser?.role === "admin") && (
-              <Link
-                href="/precos"
-                style={{
-                  color: "#ffffff",
-                  background: "#2563eb",
-                  fontWeight: 700,
-                  fontSize: "12px",
-                  padding: "5px 12px",
-                  borderRadius: "6px",
-                  textDecoration: "none",
-                  boxShadow: "0 2px 6px rgba(37,99,235,0.2)",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "4px",
-                }}
-              >
-                📊 Atualização de Preços
-              </Link>
-            )}
+            <Link
+              href="/precos"
+              style={{
+                color: "#ffffff",
+                background: "#2563eb",
+                fontWeight: 700,
+                fontSize: "12px",
+                padding: "5px 12px",
+                borderRadius: "6px",
+                textDecoration: "none",
+                boxShadow: "0 2px 6px rgba(37,99,235,0.2)",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "4px",
+              }}
+            >
+              📊 Atualização de Preços
+            </Link>
 
             <Link
               href="/termos"
@@ -976,6 +981,107 @@ export default function SimplesConferenciaPage() {
               </div>
             </div>
 
+            {/* Bloco 3.5: Peso Variável do Palete (Desconto de Tara em kg) */}
+            <div
+              style={{
+                marginBottom: "20px",
+                padding: "15px",
+                background: "rgba(217, 119, 6, 0.08)",
+                border: "1px solid rgba(217, 119, 6, 0.3)",
+                borderRadius: "10px",
+              }}
+            >
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "6px" }}>
+                <label style={{ margin: 0, color: "#92400e", fontWeight: "bold" }}>
+                  🪵 Peso Variável — Palete (Desconto de Tara em kg):
+                </label>
+                {taraPalete > 0 && (
+                  <span style={{ fontSize: "12px", fontWeight: "bold", color: "#b45309" }}>
+                    Desconto Palete: -{taraPalete.toFixed(2)} kg
+                  </span>
+                )}
+              </div>
+              <div style={{ display: "flex", gap: "10px", marginTop: "10px", alignItems: "center" }}>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  placeholder="Peso do palete em kg (ex: 18.5, 22, 25) — 0 se sem palete"
+                  value={taraPaleteInput}
+                  onChange={(e) => setTaraPaleteInput(e.target.value)}
+                  style={{
+                    fontSize: "18px",
+                    fontWeight: "bold",
+                    color: "#92400e",
+                    flex: 1,
+                    marginBottom: 0,
+                  }}
+                />
+                {taraPalete > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setTaraPaleteInput("")}
+                    style={{
+                      width: "auto",
+                      background: "#dc3545",
+                      color: "white",
+                      border: "none",
+                      padding: "10px 14px",
+                      borderRadius: "8px",
+                      fontSize: "12px",
+                      fontWeight: "bold",
+                      marginTop: 0,
+                      cursor: "pointer",
+                    }}
+                  >
+                    Limpar
+                  </button>
+                )}
+              </div>
+
+              {/* Atalhos Rápidos de Peso de Palete */}
+              <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginTop: "10px" }}>
+                <button
+                  type="button"
+                  onClick={() => setTaraPaleteInput("")}
+                  style={{
+                    width: "auto",
+                    background: taraPalete === 0 ? "#92400e" : "#ffffff",
+                    color: taraPalete === 0 ? "#ffffff" : "#92400e",
+                    border: "1px solid #d97706",
+                    padding: "6px 12px",
+                    borderRadius: "6px",
+                    fontSize: "12px",
+                    fontWeight: "bold",
+                    marginTop: 0,
+                    cursor: "pointer",
+                  }}
+                >
+                  Sem Palete (0 kg)
+                </button>
+                {["12", "15", "18", "20", "22", "25", "28", "30"].map((preset) => (
+                  <button
+                    key={preset}
+                    type="button"
+                    onClick={() => setTaraPaleteInput(preset)}
+                    style={{
+                      width: "auto",
+                      background: taraPaleteInput === preset ? "#d97706" : "#fffbeb",
+                      color: taraPaleteInput === preset ? "#ffffff" : "#92400e",
+                      border: "1px solid #f59e0b",
+                      padding: "6px 12px",
+                      borderRadius: "6px",
+                      fontSize: "12px",
+                      fontWeight: "bold",
+                      marginTop: 0,
+                      cursor: "pointer",
+                    }}
+                  >
+                    🪵 {preset} kg
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {/* Bloco 4: Seleção de Caixa Utilizada + QUANTIDADE DE CAIXAS */}
             <div
               style={{
@@ -1249,6 +1355,12 @@ export default function SimplesConferenciaPage() {
                   </span>
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <span>🪵 Tara Palete (Variável):</span>
+                  <span style={{ fontWeight: "bold", color: taraPalete > 0 ? "#fbbf24" : "#cbd5e1" }}>
+                    {taraPalete > 0 ? `-${taraPalete.toFixed(2)} kg` : "Sem palete (0,00 kg)"}
+                  </span>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
                   <span>📦 Tara Caixas ({qtdCaixasNum} cx):</span>
                   <span style={{ fontWeight: "bold", color: "#fdbb2d" }}>
                     {selectedCaixa
@@ -1381,6 +1493,9 @@ export default function SimplesConferenciaPage() {
                           <span>Bruto: {it.pesoBruto.toFixed(2)} kg</span>
                           {it.tipoCarrinhoNome && (
                             <span> • {it.tipoCarrinhoNome} (-{it.taraCarrinhoKg.toFixed(2)}kg)</span>
+                          )}
+                          {(it.taraPaleteKg || 0) > 0 && (
+                            <span> • 🪵 Palete (-{(it.taraPaleteKg || 0).toFixed(2)}kg)</span>
                           )}
                           {it.tipoCaixaNome && (
                             <span> • {it.quantidadeCaixas}x {it.tipoCaixaNome} (-{it.taraCaixaKg.toFixed(2)}kg)</span>
@@ -1667,6 +1782,7 @@ export default function SimplesConferenciaPage() {
                     <th style={{ padding: "12px" }}>Produto</th>
                     <th style={{ padding: "12px", textAlign: "center" }}>Bruto → Líquido</th>
                     <th style={{ padding: "12px" }}>Carrinho</th>
+                    <th style={{ padding: "12px" }}>Palete</th>
                     <th style={{ padding: "12px" }}>Caixa Utilizada</th>
                     <th style={{ padding: "12px" }}>Responsável</th>
                     <th style={{ padding: "12px" }}>Obs</th>
@@ -1708,6 +1824,9 @@ export default function SimplesConferenciaPage() {
                         {item.tipoCarrinhoNome || "—"}{" "}
                         {item.taraCarrinhoKg > 0 && `(-${item.taraCarrinhoKg.toFixed(1)}kg)`}
                       </td>
+                      <td style={{ padding: "10px", color: "#92400e", fontWeight: (item.taraPaleteKg || 0) > 0 ? 700 : 400 }}>
+                        {(item.taraPaleteKg || 0) > 0 ? `🪵 -${(item.taraPaleteKg || 0).toFixed(2)}kg` : "—"}
+                      </td>
                       <td style={{ padding: "10px", color: "#555" }}>
                         {item.tipoCaixaNome ? (
                           <span>
@@ -1726,7 +1845,7 @@ export default function SimplesConferenciaPage() {
                   ))}
                   {relatorioFiltrado.length === 0 && (
                     <tr>
-                      <td colSpan={7} style={{ padding: "20px", textAlign: "center", color: "#999" }}>
+                      <td colSpan={8} style={{ padding: "20px", textAlign: "center", color: "#999" }}>
                         Nenhum registro de conferência encontrado.
                       </td>
                     </tr>
@@ -1913,41 +2032,35 @@ export default function SimplesConferenciaPage() {
             ⚠️ Controle de Perdas
           </button>
 
-          {(modulos.moduloEstoqueAtivo || loggedUser?.role === "admin") && (
-            <button
-              type="button"
-              onClick={() => {
-                window.location.href = "/gerenciador-estoque"
-              }}
-              style={{ flex: 1, minWidth: "140px", background: "#4b5563", marginTop: 0 }}
-            >
-              📦 Estoque
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={() => {
+              window.location.href = "/gerenciador-estoque"
+            }}
+            style={{ flex: 1, minWidth: "140px", background: "#4b5563", marginTop: 0 }}
+          >
+            📦 Estoque
+          </button>
 
-          {(modulos.moduloSeparacaoAtivo || loggedUser?.role === "admin") && (
-            <button
-              type="button"
-              onClick={() => {
-                window.location.href = "/separacao"
-              }}
-              style={{ flex: 1, minWidth: "140px", background: "#d97706", marginTop: 0 }}
-            >
-              📋 Separação
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={() => {
+              window.location.href = "/separacao"
+            }}
+            style={{ flex: 1, minWidth: "140px", background: "#d97706", marginTop: 0 }}
+          >
+            📋 Separação
+          </button>
 
-          {(modulos.moduloExcelAtivo || loggedUser?.role === "admin") && (
-            <button
-              type="button"
-              onClick={() => {
-                window.location.href = "/precos"
-              }}
-              style={{ flex: 1, minWidth: "140px", background: "#2563eb", marginTop: 0 }}
-            >
-              📊 Preços
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={() => {
+              window.location.href = "/precos"
+            }}
+            style={{ flex: 1, minWidth: "140px", background: "#2563eb", marginTop: 0 }}
+          >
+            📊 Preços
+          </button>
         </div>
       </div>
     </div>
