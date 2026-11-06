@@ -86,6 +86,7 @@ export default function SimplesConferenciaPage() {
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([])
   const [pesoBrutoInput, setPesoBrutoInput] = useState("")
   const [selectedCarrinhoId, setSelectedCarrinhoId] = useState<string>("")
+  const [paletizado, setPaletizado] = useState<boolean>(false)
   const [taraPaleteInput, setTaraPaleteInput] = useState<string>("")
   const [selectedCaixaId, setSelectedCaixaId] = useState<string>("")
   const [quantidadeCaixasInput, setQuantidadeCaixasInput] = useState<string>("1")
@@ -219,7 +220,7 @@ export default function SimplesConferenciaPage() {
   )
 
   const taraCarrinho = selectedCarrinho ? selectedCarrinho.taraKg : 0
-  const taraPalete = Math.max(0, parseFloat(taraPaleteInput.replace(",", ".")) || 0)
+  const taraPalete = paletizado ? Math.max(0, parseFloat(taraPaleteInput.replace(",", ".")) || 0) : 0
   const taraCaixaUnitaria = selectedCaixa ? selectedCaixa.taraKg : 0
   const qtdCaixasNum = selectedCaixaId ? Math.max(1, parseInt(quantidadeCaixasInput, 10) || 1) : 0
   const taraCaixasTotal = Number((taraCaixaUnitaria * qtdCaixasNum).toFixed(3))
@@ -336,6 +337,7 @@ export default function SimplesConferenciaPage() {
     setProductInput("")
     setSelectedProduct(null)
     setPesoBrutoInput("")
+    setPaletizado(false)
     setTaraPaleteInput("")
   }
 
@@ -378,6 +380,7 @@ export default function SimplesConferenciaPage() {
         setProductInput("")
         setSelectedProduct(null)
         setPesoBrutoInput("")
+        setPaletizado(false)
         setTaraPaleteInput("")
         setObservacao("")
         setPhotoPreview("")
@@ -441,6 +444,7 @@ export default function SimplesConferenciaPage() {
       setProductInput("")
       setSelectedProduct(null)
       setPesoBrutoInput("")
+      setPaletizado(false)
       setTaraPaleteInput("")
       setObservacao("")
       setPhotoPreview("")
@@ -981,105 +985,124 @@ export default function SimplesConferenciaPage() {
               </div>
             </div>
 
-            {/* Bloco 3.5: Peso Variável do Palete (Desconto de Tara em kg) */}
-            <div
-              style={{
-                marginBottom: "20px",
-                padding: "15px",
-                background: "rgba(217, 119, 6, 0.08)",
-                border: "1px solid rgba(217, 119, 6, 0.3)",
-                borderRadius: "10px",
-              }}
-            >
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "6px" }}>
-                <label style={{ margin: 0, color: "#92400e", fontWeight: "bold" }}>
-                  🪵 Peso Variável — Palete (Desconto de Tara em kg):
-                </label>
-                {taraPalete > 0 && (
-                  <span style={{ fontSize: "12px", fontWeight: "bold", color: "#b45309" }}>
-                    Desconto Palete: -{taraPalete.toFixed(2)} kg
-                  </span>
-                )}
-              </div>
-              <div style={{ display: "flex", gap: "10px", marginTop: "10px", alignItems: "center" }}>
+            {/* Bloco 3.5: Checkbox "Paletizado" -> Expande área de Peso do Palete quando selecionado */}
+            <div style={{ marginBottom: "20px" }}>
+              <label
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "10px",
+                  cursor: "pointer",
+                  padding: "10px 14px",
+                  background: paletizado ? "rgba(217, 119, 6, 0.12)" : "#f8fafc",
+                  border: paletizado ? "2px solid #d97706" : "1px solid #cbd5e1",
+                  borderRadius: "10px",
+                  marginTop: 0,
+                  userSelect: "none",
+                }}
+              >
                 <input
-                  type="text"
-                  inputMode="decimal"
-                  placeholder="Peso do palete em kg (ex: 18.5, 22, 25) — 0 se sem palete"
-                  value={taraPaleteInput}
-                  onChange={(e) => setTaraPaleteInput(e.target.value)}
+                  type="checkbox"
+                  checked={paletizado}
+                  onChange={(e) => {
+                    const checked = e.target.checked
+                    setPaletizado(checked)
+                    if (!checked) setTaraPaleteInput("")
+                  }}
                   style={{
-                    fontSize: "18px",
-                    fontWeight: "bold",
-                    color: "#92400e",
-                    flex: 1,
-                    marginBottom: 0,
+                    width: "18px",
+                    height: "18px",
+                    margin: 0,
+                    cursor: "pointer",
+                    accentColor: "#d97706",
                   }}
                 />
-                {taraPalete > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => setTaraPaleteInput("")}
-                    style={{
-                      width: "auto",
-                      background: "#dc3545",
-                      color: "white",
-                      border: "none",
-                      padding: "10px 14px",
-                      borderRadius: "8px",
-                      fontSize: "12px",
-                      fontWeight: "bold",
-                      marginTop: 0,
-                      cursor: "pointer",
-                    }}
-                  >
-                    Limpar
-                  </button>
+                <span style={{ fontWeight: "bold", fontSize: "14px", color: paletizado ? "#92400e" : "#1a2a6c" }}>
+                  🪵 Paletizado
+                </span>
+                {paletizado && taraPalete > 0 && (
+                  <span style={{ fontSize: "12px", fontWeight: "bold", color: "#b45309", marginLeft: "4px" }}>
+                    (-{taraPalete.toFixed(2)} kg)
+                  </span>
                 )}
-              </div>
+              </label>
 
-              {/* Atalhos Rápidos de Peso de Palete */}
-              <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginTop: "10px" }}>
-                <button
-                  type="button"
-                  onClick={() => setTaraPaleteInput("")}
+              {paletizado && (
+                <div
                   style={{
-                    width: "auto",
-                    background: taraPalete === 0 ? "#92400e" : "#ffffff",
-                    color: taraPalete === 0 ? "#ffffff" : "#92400e",
-                    border: "1px solid #d97706",
-                    padding: "6px 12px",
-                    borderRadius: "6px",
-                    fontSize: "12px",
-                    fontWeight: "bold",
-                    marginTop: 0,
-                    cursor: "pointer",
+                    marginTop: "10px",
+                    padding: "15px",
+                    background: "rgba(217, 119, 6, 0.08)",
+                    border: "1px solid rgba(217, 119, 6, 0.3)",
+                    borderRadius: "10px",
                   }}
                 >
-                  Sem Palete (0 kg)
-                </button>
-                {["12", "15", "18", "20", "22", "25", "28", "30"].map((preset) => (
-                  <button
-                    key={preset}
-                    type="button"
-                    onClick={() => setTaraPaleteInput(preset)}
-                    style={{
-                      width: "auto",
-                      background: taraPaleteInput === preset ? "#d97706" : "#fffbeb",
-                      color: taraPaleteInput === preset ? "#ffffff" : "#92400e",
-                      border: "1px solid #f59e0b",
-                      padding: "6px 12px",
-                      borderRadius: "6px",
-                      fontSize: "12px",
-                      fontWeight: "bold",
-                      marginTop: 0,
-                      cursor: "pointer",
-                    }}
-                  >
-                    🪵 {preset} kg
-                  </button>
-                ))}
-              </div>
+                  <label style={{ margin: 0, color: "#92400e", fontWeight: "bold", fontSize: "13px" }}>
+                    Informe o Peso do Palete (kg):
+                  </label>
+                  <div style={{ display: "flex", gap: "10px", marginTop: "8px", alignItems: "center" }}>
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      placeholder="Ex: 18.5, 22, 25"
+                      value={taraPaleteInput}
+                      onChange={(e) => setTaraPaleteInput(e.target.value)}
+                      style={{
+                        fontSize: "18px",
+                        fontWeight: "bold",
+                        color: "#92400e",
+                        flex: 1,
+                        marginBottom: 0,
+                      }}
+                    />
+                    {taraPalete > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setTaraPaleteInput("")}
+                        style={{
+                          width: "auto",
+                          background: "#dc3545",
+                          color: "white",
+                          border: "none",
+                          padding: "10px 14px",
+                          borderRadius: "8px",
+                          fontSize: "12px",
+                          fontWeight: "bold",
+                          marginTop: 0,
+                          cursor: "pointer",
+                        }}
+                      >
+                        Limpar
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Atalhos Rápidos de Peso de Palete */}
+                  <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginTop: "10px" }}>
+                    {["12", "15", "18", "20", "22", "25", "28", "30"].map((preset) => (
+                      <button
+                        key={preset}
+                        type="button"
+                        onClick={() => setTaraPaleteInput(preset)}
+                        style={{
+                          width: "auto",
+                          background: taraPaleteInput === preset ? "#d97706" : "#fffbeb",
+                          color: taraPaleteInput === preset ? "#ffffff" : "#92400e",
+                          border: "1px solid #f59e0b",
+                          padding: "6px 12px",
+                          borderRadius: "6px",
+                          fontSize: "12px",
+                          fontWeight: "bold",
+                          marginTop: 0,
+                          cursor: "pointer",
+                        }}
+                      >
+                        {preset} kg
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Bloco 4: Seleção de Caixa Utilizada + QUANTIDADE DE CAIXAS */}
@@ -1354,12 +1377,14 @@ export default function SimplesConferenciaPage() {
                       : "Nenhum (0,00 kg)"}
                   </span>
                 </div>
-                <div style={{ display: "flex", justifyContent: "space-between" }}>
-                  <span>🪵 Tara Palete (Variável):</span>
-                  <span style={{ fontWeight: "bold", color: taraPalete > 0 ? "#fbbf24" : "#cbd5e1" }}>
-                    {taraPalete > 0 ? `-${taraPalete.toFixed(2)} kg` : "Sem palete (0,00 kg)"}
-                  </span>
-                </div>
+                {paletizado && (
+                  <div style={{ display: "flex", justifyContent: "space-between" }}>
+                    <span>🪵 Tara Palete:</span>
+                    <span style={{ fontWeight: "bold", color: taraPalete > 0 ? "#fbbf24" : "#cbd5e1" }}>
+                      {taraPalete > 0 ? `-${taraPalete.toFixed(2)} kg` : "0,00 kg"}
+                    </span>
+                  </div>
+                )}
                 <div style={{ display: "flex", justifyContent: "space-between" }}>
                   <span>📦 Tara Caixas ({qtdCaixasNum} cx):</span>
                   <span style={{ fontWeight: "bold", color: "#fdbb2d" }}>

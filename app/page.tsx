@@ -45,6 +45,7 @@ export default function Home() {
   const [weightInput, setWeightInput] = useState("")
   const [boxesCountInput, setBoxesCountInput] = useState("")
   const [tarePerBoxInput, setTarePerBoxInput] = useState("")
+  const [paletizado, setPaletizado] = useState(false)
   const [paleteWeightInput, setPaleteWeightInput] = useState("")
   const [dbTareByProduct, setDbTareByProduct] = useState<Record<string, number>>({})
   const [items, setItems] = useState<Item[]>([])
@@ -255,7 +256,7 @@ export default function Home() {
     const grossWeight = parseKgInput(weightInput)
     const boxes = Number.parseInt(boxesCountInput || "0", 10) || 0
     const tarePerBox = parseKgInput(tarePerBoxInput || "0") || 0
-    const paleteKg = Math.max(0, parseKgInput(paleteWeightInput || "0") || 0)
+    const paleteKg = paletizado ? Math.max(0, parseKgInput(paleteWeightInput || "0") || 0) : 0
     const boxTare = boxes > 0 && tarePerBox > 0 ? boxes * tarePerBox : 0
     const totalTare = boxTare + paleteKg
     const parsedWeight = Number(Math.max(0, grossWeight - totalTare).toFixed(3))
@@ -279,6 +280,7 @@ export default function Home() {
     setProductInput("")
     setWeightInput("")
     setBoxesCountInput("")
+    setPaletizado(false)
     setPaleteWeightInput("")
     setFilteredProducts([])
   }
@@ -1418,73 +1420,89 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Desconto de Peso Variável do Palete */}
-            <div
-              style={{
-                padding: "10px 12px",
-                background: "rgba(217, 119, 6, 0.08)",
-                border: "1px solid rgba(217, 119, 6, 0.3)",
-                borderRadius: "8px",
-                marginBottom: "10px",
-              }}
-            >
-              <label style={{ marginTop: 0, fontSize: "13px", color: "#92400e", fontWeight: 700 }}>
-                🪵 Peso Variável — Palete (kg, opcional):
+            {/* Checkbox "Paletizado" -> Abre área de peso do palete quando marcado */}
+            <div style={{ marginBottom: "10px" }}>
+              <label
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  cursor: "pointer",
+                  padding: "8px 12px",
+                  background: paletizado ? "rgba(217, 119, 6, 0.12)" : "#ffffff",
+                  border: paletizado ? "2px solid #d97706" : "1px solid #cbd5e1",
+                  borderRadius: "8px",
+                  marginTop: 0,
+                  userSelect: "none",
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={paletizado}
+                  onChange={(e) => {
+                    const checked = e.target.checked
+                    setPaletizado(checked)
+                    if (!checked) setPaleteWeightInput("")
+                  }}
+                  style={{ width: "17px", height: "17px", margin: 0, cursor: "pointer", accentColor: "#d97706" }}
+                />
+                <span style={{ fontSize: "13px", fontWeight: 700, color: paletizado ? "#92400e" : "#1a2a6c" }}>
+                  🪵 Paletizado
+                </span>
               </label>
-              <input
-                type="text"
-                inputMode="decimal"
-                placeholder="Ex: 18.5, 22, 25 (0 se sem palete)"
-                value={paleteWeightInput}
-                onChange={(e) => setPaleteWeightInput(e.target.value)}
-                style={{ marginBottom: "6px" }}
-              />
-              <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
-                <button
-                  type="button"
-                  onClick={() => setPaleteWeightInput("")}
+
+              {paletizado && (
+                <div
                   style={{
-                    width: "auto",
-                    background: !paleteWeightInput ? "#92400e" : "#ffffff",
-                    color: !paleteWeightInput ? "#ffffff" : "#92400e",
-                    border: "1px solid #d97706",
-                    padding: "4px 10px",
-                    borderRadius: "6px",
-                    fontSize: "11px",
-                    fontWeight: 700,
-                    marginTop: 0,
+                    marginTop: "8px",
+                    padding: "10px 12px",
+                    background: "rgba(217, 119, 6, 0.08)",
+                    border: "1px solid rgba(217, 119, 6, 0.3)",
+                    borderRadius: "8px",
                   }}
                 >
-                  Sem Palete (0 kg)
-                </button>
-                {["12", "15", "18", "20", "22", "25", "28", "30"].map((preset) => (
-                  <button
-                    key={preset}
-                    type="button"
-                    onClick={() => setPaleteWeightInput(preset)}
-                    style={{
-                      width: "auto",
-                      background: paleteWeightInput === preset ? "#d97706" : "#fffbeb",
-                      color: paleteWeightInput === preset ? "#ffffff" : "#92400e",
-                      border: "1px solid #f59e0b",
-                      padding: "4px 10px",
-                      borderRadius: "6px",
-                      fontSize: "11px",
-                      fontWeight: 700,
-                      marginTop: 0,
-                    }}
-                  >
-                    🪵 {preset} kg
-                  </button>
-                ))}
-              </div>
+                  <label style={{ marginTop: 0, fontSize: "13px", color: "#92400e", fontWeight: 700 }}>
+                    Informe o Peso do Palete (kg):
+                  </label>
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    placeholder="Ex: 18.5, 22, 25"
+                    value={paleteWeightInput}
+                    onChange={(e) => setPaleteWeightInput(e.target.value)}
+                    style={{ marginBottom: "6px" }}
+                  />
+                  <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+                    {["12", "15", "18", "20", "22", "25", "28", "30"].map((preset) => (
+                      <button
+                        key={preset}
+                        type="button"
+                        onClick={() => setPaleteWeightInput(preset)}
+                        style={{
+                          width: "auto",
+                          background: paleteWeightInput === preset ? "#d97706" : "#fffbeb",
+                          color: paleteWeightInput === preset ? "#ffffff" : "#92400e",
+                          border: "1px solid #f59e0b",
+                          padding: "4px 10px",
+                          borderRadius: "6px",
+                          fontSize: "11px",
+                          fontWeight: 700,
+                          marginTop: 0,
+                        }}
+                      >
+                        {preset} kg
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             {(() => {
               const g = parseKgInput(weightInput || "0") || 0
               const b = Number.parseInt(boxesCountInput || "0", 10) || 0
               const t = parseKgInput(tarePerBoxInput || "0") || 0
-              const p = Math.max(0, parseKgInput(paleteWeightInput || "0") || 0)
+              const p = paletizado ? Math.max(0, parseKgInput(paleteWeightInput || "0") || 0) : 0
               const boxDiscount = b > 0 && t > 0 ? b * t : 0
               const discount = boxDiscount + p
               if (g > 0 && discount > 0) {

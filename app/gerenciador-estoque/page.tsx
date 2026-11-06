@@ -248,7 +248,8 @@ export default function GerenciadorEstoquePage() {
   const [maturacao, setMaturacao] = useState<Record<string, MaturacaoStatus>>({})
   // Quantidade de caixas para cálculo de Tara (quando item é contado em kg)
   const [caixasTara, setCaixasTara] = useState<Record<string, string>>({})
-  // Peso variável do Palete (kg) para desconto na pesagem de itens em kg
+  // Checkbox "Paletizado" e peso variável do Palete (kg) por item
+  const [paletizadoMap, setPaletizadoMap] = useState<Record<string, boolean>>({})
   const [paleteTaraKg, setPaleteTaraKg] = useState<Record<string, string>>({})
 
   const [isSaving, setIsSaving] = useState(false)
@@ -802,76 +803,113 @@ export default function GerenciadorEstoquePage() {
 
           {(hasTare || item.tipoUnidade === "kg") && (
             <div className="field">
-              <span>🪵 Peso Variável — Palete (kg)</span>
-              <div className="stepper">
-                <button
-                  type="button"
-                  onClick={() =>
-                    setPaleteTaraKg((prev) => ({
-                      ...prev,
-                      [item.reduzido]: stepValue(prev[item.reduzido], -1),
-                    }))
-                  }
-                >
-                  -
-                </button>
+              <label
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  cursor: "pointer",
+                  padding: "6px 10px",
+                  borderRadius: "8px",
+                  background: paletizadoMap[item.reduzido] ? "rgba(217, 119, 6, 0.12)" : "#f8fafc",
+                  border: paletizadoMap[item.reduzido] ? "1px solid #d97706" : "1px solid #cbd5e1",
+                  marginTop: 0,
+                  width: "fit-content",
+                }}
+              >
                 <input
-                  type="text"
-                  inputMode="decimal"
-                  placeholder="Ex: 18, 22, 25"
-                  value={paleteTaraKg[item.reduzido] || ""}
-                  onChange={(e) =>
-                    setPaleteTaraKg((prev) => ({
-                      ...prev,
-                      [item.reduzido]: sanitizeExpression(e.target.value),
-                    }))
-                  }
-                  onBlur={(e) =>
-                    setPaleteTaraKg((prev) => ({
-                      ...prev,
-                      [item.reduzido]: normalizeNumericString(e.target.value),
-                    }))
-                  }
-                />
-                <button
-                  type="button"
-                  onClick={() =>
-                    setPaleteTaraKg((prev) => ({
-                      ...prev,
-                      [item.reduzido]: stepValue(prev[item.reduzido], 1),
-                    }))
-                  }
-                >
-                  +
-                </button>
-              </div>
-              <div style={{ display: "flex", gap: "4px", marginTop: "4px", flexWrap: "wrap" }}>
-                {(["0", "15", "18", "20", "22", "25", "30"] as const).map((preset) => (
-                  <button
-                    key={preset}
-                    type="button"
-                    onClick={() =>
-                      setPaleteTaraKg((prev) => ({
-                        ...prev,
-                        [item.reduzido]: preset === "0" ? "" : preset,
-                      }))
+                  type="checkbox"
+                  checked={Boolean(paletizadoMap[item.reduzido])}
+                  onChange={(e) => {
+                    const checked = e.target.checked
+                    setPaletizadoMap((prev) => ({ ...prev, [item.reduzido]: checked }))
+                    if (!checked) {
+                      setPaleteTaraKg((prev) => ({ ...prev, [item.reduzido]: "" }))
                     }
-                    style={{
-                      flex: 1,
-                      padding: "4px 4px",
-                      fontSize: "11px",
-                      fontWeight: 700,
-                      background: "#fffbeb",
-                      color: "#92400e",
-                      border: "1px solid #f59e0b",
-                      borderRadius: "6px",
-                      marginTop: 0,
-                    }}
-                  >
-                    {preset}kg
-                  </button>
-                ))}
-              </div>
+                  }}
+                  style={{ width: "16px", height: "16px", margin: 0, accentColor: "#d97706" }}
+                />
+                <span style={{ fontWeight: 700, fontSize: "12px", color: paletizadoMap[item.reduzido] ? "#92400e" : "#334155" }}>
+                  🪵 Paletizado
+                </span>
+              </label>
+
+              {paletizadoMap[item.reduzido] && (
+                <div style={{ marginTop: "6px" }}>
+                  <span style={{ fontSize: "11px", color: "#92400e", fontWeight: 700, display: "block", marginBottom: "4px" }}>
+                    Peso do Palete (kg)
+                  </span>
+                  <div className="stepper">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setPaleteTaraKg((prev) => ({
+                          ...prev,
+                          [item.reduzido]: stepValue(prev[item.reduzido], -1),
+                        }))
+                      }
+                    >
+                      -
+                    </button>
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      placeholder="Ex: 18, 22, 25"
+                      value={paleteTaraKg[item.reduzido] || ""}
+                      onChange={(e) =>
+                        setPaleteTaraKg((prev) => ({
+                          ...prev,
+                          [item.reduzido]: sanitizeExpression(e.target.value),
+                        }))
+                      }
+                      onBlur={(e) =>
+                        setPaleteTaraKg((prev) => ({
+                          ...prev,
+                          [item.reduzido]: normalizeNumericString(e.target.value),
+                        }))
+                      }
+                    />
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setPaleteTaraKg((prev) => ({
+                          ...prev,
+                          [item.reduzido]: stepValue(prev[item.reduzido], 1),
+                        }))
+                      }
+                    >
+                      +
+                    </button>
+                  </div>
+                  <div style={{ display: "flex", gap: "4px", marginTop: "4px", flexWrap: "wrap" }}>
+                    {(["15", "18", "20", "22", "25", "30"] as const).map((preset) => (
+                      <button
+                        key={preset}
+                        type="button"
+                        onClick={() =>
+                          setPaleteTaraKg((prev) => ({
+                            ...prev,
+                            [item.reduzido]: preset,
+                          }))
+                        }
+                        style={{
+                          flex: 1,
+                          padding: "4px 4px",
+                          fontSize: "11px",
+                          fontWeight: 700,
+                          background: "#fffbeb",
+                          color: "#92400e",
+                          border: "1px solid #f59e0b",
+                          borderRadius: "6px",
+                          marginTop: 0,
+                        }}
+                      >
+                        {preset}kg
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -936,7 +974,9 @@ export default function GerenciadorEstoquePage() {
       calcAreaTotal(item, pickingFardos, pickingPallets) +
       calcAreaTotal(item, avariaFardos, avariaPallets)
     const tareBoxes = evaluateExpression(caixasTara[item.reduzido] || "0")
-    const paleteKg = evaluateExpression(paleteTaraKg[item.reduzido] || "0")
+    const paleteKg = paletizadoMap[item.reduzido]
+      ? evaluateExpression(paleteTaraKg[item.reduzido] || "0")
+      : 0
     const tareDiscount = tareBoxes * (Number(item.taraKg) || 0) + paleteKg
     return Math.max(0, Number((gross - tareDiscount).toFixed(2)))
   }

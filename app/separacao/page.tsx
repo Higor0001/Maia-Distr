@@ -56,6 +56,7 @@ export default function SeparacaoPage() {
   const [pesoBrutoInput, setPesoBrutoInput] = useState("")
   const [selectedCarrinhoId, setSelectedCarrinhoId] = useState("")
   const [selectedCaixaId, setSelectedCaixaId] = useState("")
+  const [paletizado, setPaletizado] = useState(false)
   const [paleteTaraInput, setPaleteTaraInput] = useState("")
   const [pesagemObs, setPesagemObs] = useState("")
 
@@ -129,10 +130,10 @@ export default function SeparacaoPage() {
     ]
   }, [usuariosAjudantes])
 
-  // Cálculo de Tara para Pesagem (incluindo Peso Variável do Palete)
+  // Cálculo de Tara para Pesagem (incluindo Peso Variável do Palete quando Paletizado)
   const cTara = carrinhos.find((c) => c.id === selectedCarrinhoId)?.taraKg || 0
   const cxTara = caixas.find((c) => c.id === selectedCaixaId)?.taraKg || 0
-  const paleteTara = Math.max(0, parseFloat(paleteTaraInput.replace(",", ".")) || 0)
+  const paleteTara = paletizado ? Math.max(0, parseFloat(paleteTaraInput.replace(",", ".")) || 0) : 0
   const taraTotal = Number((cTara + cxTara + paleteTara).toFixed(3))
   const pBruto = parseFloat(pesoBrutoInput.replace(",", ".")) || 0
   const pLiquido = Math.max(0, Number((pBruto - taraTotal).toFixed(3)))
@@ -233,6 +234,7 @@ export default function SeparacaoPage() {
         setMsgFeedback(`Pesagem registrada: ${pBruto.toFixed(2)} kg → ${pLiquido.toFixed(2)} kg.`)
         setTarefaSelecionadaPesagem(null)
         setPesoBrutoInput("")
+        setPaletizado(false)
         setPaleteTaraInput("")
         setPesagemObs("")
         carregarDados()
@@ -626,8 +628,8 @@ export default function SeparacaoPage() {
                     </div>
                   </div>
 
-                  {/* Taras Carrinho, Caixa e Peso Variável (Palete) */}
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {/* Taras Carrinho e Caixa + Checkbox "Paletizado" */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                       <label className="text-xs font-bold text-slate-500">Carrinho</label>
                       <select
@@ -659,20 +661,61 @@ export default function SeparacaoPage() {
                         ))}
                       </select>
                     </div>
+                  </div>
 
-                    <div>
-                      <label className="text-xs font-bold text-slate-500">
-                        🪵 Palete (Peso Variável kg)
-                      </label>
+                  {/* Checkbox "Paletizado" -> Abre área de peso apenas quando marcado */}
+                  <div>
+                    <label
+                      className={`inline-flex items-center gap-2.5 px-3.5 py-2 rounded-xl border text-xs font-bold cursor-pointer select-none transition-all ${
+                        paletizado
+                          ? "bg-amber-50 border-amber-500 text-amber-900"
+                          : "bg-slate-50 border-slate-300 text-slate-700 hover:bg-slate-100"
+                      }`}
+                    >
                       <input
-                        type="text"
-                        inputMode="decimal"
-                        placeholder="Ex: 22.5"
-                        value={paleteTaraInput}
-                        onChange={(e) => setPaleteTaraInput(e.target.value)}
-                        className="w-full mt-1 p-2 text-xs font-bold border border-slate-300 rounded-lg outline-none font-mono"
+                        type="checkbox"
+                        checked={paletizado}
+                        onChange={(e) => {
+                          const checked = e.target.checked
+                          setPaletizado(checked)
+                          if (!checked) setPaleteTaraInput("")
+                        }}
+                        className="w-4 h-4 accent-amber-600 cursor-pointer"
                       />
-                    </div>
+                      <span>🪵 Paletizado</span>
+                    </label>
+
+                    {paletizado && (
+                      <div className="mt-2.5 p-3 rounded-xl bg-amber-50/70 border border-amber-300 space-y-2">
+                        <label className="block text-xs font-bold text-amber-900">
+                          Peso do Palete (kg):
+                        </label>
+                        <input
+                          type="text"
+                          inputMode="decimal"
+                          placeholder="Ex: 18.5, 22, 25"
+                          value={paleteTaraInput}
+                          onChange={(e) => setPaleteTaraInput(e.target.value)}
+                          className="w-full p-2 text-sm font-bold border border-amber-400 bg-white rounded-lg outline-none font-mono text-amber-950"
+                        />
+                        <div className="flex flex-wrap gap-1.5">
+                          {["12", "15", "18", "20", "22", "25", "28", "30"].map((preset) => (
+                            <button
+                              key={preset}
+                              type="button"
+                              onClick={() => setPaleteTaraInput(preset)}
+                              className={`px-2.5 py-1 rounded-md text-[11px] font-bold border transition-colors ${
+                                paleteTaraInput === preset
+                                  ? "bg-amber-600 text-white border-amber-600"
+                                  : "bg-white text-amber-900 border-amber-300 hover:bg-amber-100"
+                              }`}
+                            >
+                              {preset} kg
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   {/* Display Bruto -> Líquido */}
